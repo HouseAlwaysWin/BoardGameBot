@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnoGame.Extensions;
 using UnoGame.GameComponents;
 
 namespace UnoGame
@@ -125,6 +126,8 @@ namespace UnoGame
                     }
                 }
 
+                TotalCards.Shuffle();
+
                 GameGroup newGameGroup = new GameGroup()
                 {
                     GroupId = groupId,
@@ -132,6 +135,7 @@ namespace UnoGame
                     Discards = new List<Card>(),
                     Players = new List<Player>()
                 };
+
                 GameGroups.Add(newGameGroup);
             });
         }

@@ -15,15 +15,19 @@ namespace UnoGame.Telegram
     {
         private readonly ILogger<TelegramBotService> _logger;
         private readonly ITelegramBotClient _botClient;
+        private readonly GameState _gameState;
 
         public TelegramBotService(ITelegramBotClient botClient, ILogger<TelegramBotService> logger)
         {
             _logger = logger;
             _botClient = botClient;
+            _gameState = new GameState();
         }
 
         public async Task EchoAsync(Update update)
         {
+            await _gameState.StartNewGame(update.Message.Chat.Id.ToString());
+
             var handler = update.Type switch
             {
                 // UpdateType.Unknown:
