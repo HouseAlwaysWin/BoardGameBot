@@ -68,6 +68,7 @@ namespace UnoGame
 
         public async Task StartNewGame(string groupId)
         {
+            if (string.IsNullOrEmpty(groupId)) return;
             await Task.Run(() =>
             {
                 var TotalCards = new List<Card>();

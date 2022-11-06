@@ -26,7 +26,7 @@ namespace UnoGame.Telegram
 
         public async Task EchoAsync(Update update)
         {
-            await _gameState.StartNewGame(update.Message.Chat.Id.ToString());
+            await _gameState.StartNewGame(update.Message?.Chat?.Id.ToString());
 
             var handler = update.Type switch
             {
