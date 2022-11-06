@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32804.467
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelegramGameBot", "TelegramGameBot\TelegramGameBot.csproj", "{553119D7-EF17-432E-B46D-63298D62B8A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnoGame", "UnoGame\UnoGame.csproj", "{FD45BC77-E3E3-4D8E-8B21-35A2D81DF86A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{553119D7-EF17-432E-B46D-63298D62B8A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{553119D7-EF17-432E-B46D-63298D62B8A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{553119D7-EF17-432E-B46D-63298D62B8A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{553119D7-EF17-432E-B46D-63298D62B8A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD45BC77-E3E3-4D8E-8B21-35A2D81DF86A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD45BC77-E3E3-4D8E-8B21-35A2D81DF86A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD45BC77-E3E3-4D8E-8B21-35A2D81DF86A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD45BC77-E3E3-4D8E-8B21-35A2D81DF86A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5E41D164-AEE0-4DAF-952E-7045A4E22668}
+	EndGlobalSection
+EndGlobal
