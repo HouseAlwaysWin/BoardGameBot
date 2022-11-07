@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -8,6 +9,8 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using UnoGame.Extensions;
+using UnoGame.GameComponents;
 
 namespace UnoGame.Telegram
 {
@@ -15,18 +18,23 @@ namespace UnoGame.Telegram
     {
         private readonly ILogger<TelegramBotService> _logger;
         private readonly ITelegramBotClient _botClient;
-        private readonly GameState _gameState;
+        private readonly GameService _gameState;
+        private IMapper _mapper;
 
-        public TelegramBotService(ITelegramBotClient botClient, ILogger<TelegramBotService> logger)
+        public TelegramBotService(
+            ITelegramBotClient botClient,
+            ILogger<TelegramBotService> logger)
         {
             _logger = logger;
             _botClient = botClient;
-            _gameState = new GameState();
+            _gameState = new GameService();
+            _mapper = DTOMapper.CreateMap();
         }
+
+
 
         public async Task EchoAsync(Update update)
         {
-            await _gameState.StartNewGame(update.Message?.Chat?.Id.ToString());
 
             var handler = update.Type switch
             {
@@ -47,6 +55,9 @@ namespace UnoGame.Telegram
 
         private async Task BotOnMessageReceived(Message message)
         {
+            var host = _mapper.Map<Player>(message.From);
+            await _gameState.StartNewGame(message?.Chat?.Id.ToString(), host);
+
         }
 
         private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery)

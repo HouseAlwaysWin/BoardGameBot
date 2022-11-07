@@ -13,6 +13,7 @@ namespace UnoGame.GameComponents
         public List<Player> Players { get; set; }
         public List<Card> Cards { get; set; }
         public List<Card> Discards { get; set; }
+        public Player Host { get; set; }
 
     }
 }

@@ -19,7 +19,7 @@ builder.Services.AddSwaggerGen();
 var botConfig = builder.Configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
 builder.Services.AddHostedService<WebhookService>();
 
-builder.Services.AddHttpClient("BangGameBot")
+builder.Services.AddHttpClient("BoardGameBot")
        .AddTypedClient<ITelegramBotClient>(httpClient => new TelegramBotClient(botConfig.BotToken, httpClient));
 
 builder.Services.AddScoped<ITelegramBotService, TelegramBotService>();
@@ -39,11 +39,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-//if (app.Environment.IsDevelopment())
-//{
-//    app.Run("http://localhost:8443");
-//}
-//else
-//{
 app.Run();
-//}

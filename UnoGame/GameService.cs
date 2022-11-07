@@ -9,64 +9,11 @@ using UnoGame.GameComponents;
 
 namespace UnoGame
 {
-    public class GameState
+    public class GameService
     {
         public List<GameGroup> GameGroups = new List<GameGroup>();
 
-        private Card AddNumberCard(int number, CardColor color)
-        {
-            return new Card
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = $"{color}{number}",
-                CardType = CardType.Number,
-                Color = color,
-                Image = $"Source/Images/unocards/{color.ToString().ToLower()}{number}.png",
-                Number = number,
-            };
-        }
-
-        private Card AddFunctionCard(CardType cardType, CardColor color)
-        {
-            return new Card
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = $"{color}{cardType}",
-                CardType = cardType,
-                Color = color,
-                Image = $"Source/Images/unocards/{color.ToString().ToLower()}{cardType}.png",
-                Number = 0,
-            };
-        }
-
-        private Card AddWildCard()
-        {
-            return new Card
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = CardType.Wild.ToString(),
-                CardType = CardType.Wild,
-                Color = null,
-                Image = $"Source/Images/unocards/wild.png",
-                Number = 0,
-            };
-        }
-
-        private Card AddWildDrawFourCard()
-        {
-            return new Card
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = CardType.WildDrawFour.ToString(),
-                CardType = CardType.WildDrawFour,
-                Color = null,
-                Image = $"Source/Images/unocards/wildDrawFour.png",
-                Number = 0,
-            };
-        }
-
-
-        public async Task StartNewGame(string groupId)
+        public async Task StartNewGame(string groupId, Player host)
         {
             if (string.IsNullOrEmpty(groupId)) return;
             await Task.Run(() =>
@@ -134,11 +81,65 @@ namespace UnoGame
                     GroupId = groupId,
                     Cards = TotalCards,
                     Discards = new List<Card>(),
-                    Players = new List<Player>()
+                    Players = new List<Player>(),
+                    Host = host
                 };
 
                 GameGroups.Add(newGameGroup);
             });
         }
+
+        private Card AddNumberCard(int number, CardColor color)
+        {
+            return new Card
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = $"{color}{number}",
+                CardType = CardType.Number,
+                Color = color,
+                Image = $"Source/Images/unocards/{color.ToString().ToLower()}{number}.png",
+                Number = number,
+            };
+        }
+
+        private Card AddFunctionCard(CardType cardType, CardColor color)
+        {
+            return new Card
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = $"{color}{cardType}",
+                CardType = cardType,
+                Color = color,
+                Image = $"Source/Images/unocards/{color.ToString().ToLower()}{cardType}.png",
+                Number = 0,
+            };
+        }
+
+        private Card AddWildCard()
+        {
+            return new Card
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = CardType.Wild.ToString(),
+                CardType = CardType.Wild,
+                Color = null,
+                Image = $"Source/Images/unocards/wild.png",
+                Number = 0,
+            };
+        }
+
+        private Card AddWildDrawFourCard()
+        {
+            return new Card
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = CardType.WildDrawFour.ToString(),
+                CardType = CardType.WildDrawFour,
+                Color = null,
+                Image = $"Source/Images/unocards/wildDrawFour.png",
+                Number = 0,
+            };
+        }
+
     }
 }
