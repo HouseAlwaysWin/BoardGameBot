@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using CommonGameLib.Services;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -9,6 +11,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 using UnoGame.Extensions;
 using UnoGame.GameComponents;
 
@@ -18,17 +21,34 @@ namespace UnoGame.Telegram
     {
         private readonly ILogger<TelegramBotService> _logger;
         private readonly ITelegramBotClient _botClient;
-        private readonly GameService _gameState;
+        private readonly IGameService _gameService;
         private IMapper _mapper;
+        private Dictionary<string, Action<Message>> _commands;
 
         public TelegramBotService(
             ITelegramBotClient botClient,
+            IGameService gameService,
             ILogger<TelegramBotService> logger)
         {
             _logger = logger;
             _botClient = botClient;
-            _gameState = new GameService();
+            _gameService = gameService;
             _mapper = DTOMapper.CreateMap();
+
+            InitCommands();
+        }
+
+        private void InitCommands()
+        {
+            var botInfo = _botClient.GetMeAsync().Result;
+            var botName = $"{botInfo.Username}";
+            _commands = new Dictionary<string, Action<Message>>
+            {
+                { @"/new",  async m => await SendNewGame(m) },
+                { @$"/new@{botName}",  async m => await SendNewGame(m) },
+                { @"/join",  async m => await JoinPlayer(m) },
+                { @$"/join@{botName}",  async m => await JoinPlayer(m) }
+            };
         }
 
 
@@ -55,10 +75,35 @@ namespace UnoGame.Telegram
 
         private async Task BotOnMessageReceived(Message message)
         {
-            var host = _mapper.Map<Player>(message.From);
-            await _gameState.StartNewGame(message?.Chat?.Id.ToString(), host);
+            if (message.Type != MessageType.Text)
+                return;
+
+            var text = string.IsNullOrEmpty(message.Text) ? "" : message.Text;
+            if (_commands.ContainsKey(text))
+            {
+                _commands[text].Invoke(message);
+            }
 
         }
+
+        public async Task SendNewGame(Message message)
+        {
+            var host = _mapper.Map<Player>(message.From);
+            var res = await _gameService.NewGameAsync(message?.Chat?.Id.ToString(), host);
+            await _botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: res.Message);
+        }
+
+        public async Task JoinPlayer(Message message)
+        {
+            var newPlayer = _mapper.Map<Player>(message.From);
+            var res = await _gameService.JoinPlayerAsync(message?.Chat?.Id.ToString(), newPlayer);
+            await _botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: res.Message);
+        }
+
 
         private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
         {

@@ -1,4 +1,4 @@
-namespace TelegramGameBot
+namespace GameBotAPI
 {
     public class WeatherForecast
     {

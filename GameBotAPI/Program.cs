@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using Telegram.Bot;
-using TelegramGameBot;
-using TelegramGameBot.Services;
+using GameBotAPI;
+using GameBotAPI.Services;
 using UnoGame.Telegram;
+using UnoGame;
+using CommonGameLib.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +25,11 @@ builder.Services.AddHttpClient("BoardGameBot")
        .AddTypedClient<ITelegramBotClient>(httpClient => new TelegramBotClient(botConfig.BotToken, httpClient));
 
 builder.Services.AddScoped<ITelegramBotService, TelegramBotService>();
+
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+builder.Services.AddSingleton<ICachedService, CachedService>();
+builder.Services.AddSingleton<IGameService, GameService>();
+builder.Services.AddDistributedMemoryCache();
 
 var app = builder.Build();
 

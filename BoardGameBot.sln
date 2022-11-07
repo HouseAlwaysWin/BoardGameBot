@@ -5,7 +5,9 @@ VisualStudioVersion = 17.3.32804.467
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnoGame", "UnoGame\UnoGame.csproj", "{FD45BC77-E3E3-4D8E-8B21-35A2D81DF86A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TelegramGameBot", "TelegramGameBot\TelegramGameBot.csproj", "{7047026F-B4F4-4958-8B9C-5D23A8130296}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameBotAPI", "GameBotAPI\GameBotAPI.csproj", "{6089511A-71DD-4E4B-A693-BA747A3B5647}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonGameLib", "CommonGameLib\CommonGameLib.csproj", "{23543F26-8B1C-4C33-A6A3-5B2D3C796A3D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +19,14 @@ Global
 		{FD45BC77-E3E3-4D8E-8B21-35A2D81DF86A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FD45BC77-E3E3-4D8E-8B21-35A2D81DF86A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FD45BC77-E3E3-4D8E-8B21-35A2D81DF86A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7047026F-B4F4-4958-8B9C-5D23A8130296}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7047026F-B4F4-4958-8B9C-5D23A8130296}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7047026F-B4F4-4958-8B9C-5D23A8130296}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7047026F-B4F4-4958-8B9C-5D23A8130296}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6089511A-71DD-4E4B-A693-BA747A3B5647}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6089511A-71DD-4E4B-A693-BA747A3B5647}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6089511A-71DD-4E4B-A693-BA747A3B5647}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6089511A-71DD-4E4B-A693-BA747A3B5647}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23543F26-8B1C-4C33-A6A3-5B2D3C796A3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23543F26-8B1C-4C33-A6A3-5B2D3C796A3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23543F26-8B1C-4C33-A6A3-5B2D3C796A3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23543F26-8B1C-4C33-A6A3-5B2D3C796A3D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

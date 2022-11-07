@@ -1,7 +1,7 @@
 ﻿//using Telegram.Bot;
 //using Telegram.Bot.Types;
 
-//namespace TelegramGameBot.Services
+//namespace GameBotAPI.Services
 //{
 //    public class RequestService
 //    {

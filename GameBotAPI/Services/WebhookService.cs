@@ -1,7 +1,7 @@
 ﻿using Telegram.Bot.Types.Enums;
 using Telegram.Bot;
 
-namespace TelegramGameBot.Services
+namespace GameBotAPI.Services
 {
     public class WebhookService : IHostedService
     {

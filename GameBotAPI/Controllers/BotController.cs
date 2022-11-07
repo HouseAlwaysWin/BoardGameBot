@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Telegram.Bot.Types;
-using TelegramGameBot.Services;
+using GameBotAPI.Services;
 using UnoGame.Telegram;
 
-namespace TelegramGameBot.Controllers
+namespace GameBotAPI.Controllers
 {
     [ApiController]
     [Route("[controller]/[action]")]
@@ -16,7 +16,7 @@ namespace TelegramGameBot.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> HandleRequest([FromBody] Update update)
+        public async Task<IActionResult> HandleTelegramRequest([FromBody] Update update)
         {
             await _telegramBotService.EchoAsync(update);
             return Ok();

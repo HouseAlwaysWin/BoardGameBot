@@ -1,23 +1,44 @@
-﻿using System;
+﻿using CommonGameLib.Extensions;
+using CommonGameLib.Services;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using UnoGame.Extensions;
 using UnoGame.GameComponents;
+using UnoGame.Telegram;
 
 namespace UnoGame
 {
-    public class GameService
+    public class GameService : IGameService
     {
-        public List<GameGroup> GameGroups = new List<GameGroup>();
-
-        public async Task StartNewGame(string groupId, Player host)
+        public Dictionary<string, GameGroup> GameGroups;
+        public string GameGroupsKey = "GameGroups";
+        private readonly ICachedService _cachedService;
+        private readonly ILogger<GameService> _logger;
+        public GameService(ICachedService cachedService, ILogger<GameService> logger)
         {
-            if (string.IsNullOrEmpty(groupId)) return;
-            await Task.Run(() =>
+            _cachedService = cachedService;
+            _logger = logger;
+            GameGroups = _cachedService.GetAndSetAsync(GameGroupsKey, new Dictionary<string, GameGroup>()).Result;
+        }
+
+        public async Task<ResponseInfo> NewGameAsync(string groupId, Player host)
+        {
+            return await Task.Run(async () =>
             {
+                var response = new ResponseInfo();
+                if (string.IsNullOrEmpty(groupId))
+                {
+                    response.Message = "請先把機器人加入到群組";
+                    return response;
+                }
+
                 var TotalCards = new List<Card>();
                 Action<int> AddNumbers = (i) =>
                {
@@ -84,9 +105,74 @@ namespace UnoGame
                     Players = new List<Player>(),
                     Host = host
                 };
+                if (!GameGroups.ContainsKey(groupId))
+                {
+                    GameGroups.Add(groupId, newGameGroup);
+                    var currentGroup = GameGroups[groupId];
+                    currentGroup.Players.Add(host);
 
-                GameGroups.Add(newGameGroup);
+                    var saveToCached = await SaveGameGroupsAsync(GameGroups);
+                    if (!saveToCached)
+                    {
+                        response.Message = @$"儲存GameGroups發生錯誤";
+                        return response;
+                    }
+                }
+                else
+                {
+                    response.Message = @$"已開局，開局者：@{host.Username}";
+                    return response;
+                }
+                response.Message = @$"開始新遊戲，開局者：@{host.Username}";
+                return response;
             });
+        }
+
+        public async Task<ResponseInfo> JoinPlayerAsync(string groupId, Player player)
+        {
+            return await Task.Run(async () =>
+            {
+                var response = new ResponseInfo();
+                if (!GameGroups.ContainsKey(groupId))
+                {
+                    response.Message = "遊戲尚未開局，請先執行開局指令 /new";
+                    return response;
+                }
+
+                var currentGroup = GameGroups[groupId];
+                if (currentGroup.Players.Any(p => p.Id == player.Id))
+                {
+                    response.Message = @$"玩家@{player.Username}已經加入遊戲了";
+                    return response;
+                }
+
+                currentGroup.Players.Add(player);
+
+                var saveToCached = await SaveGameGroupsAsync(GameGroups);
+                if (!saveToCached)
+                {
+                    response.Message = @$"儲存GameGroups發生錯誤";
+                    return response;
+                }
+
+                StringBuilder msgBuilder = new StringBuilder();
+                response.Message = @$"玩家@{player.Username}加入遊戲";
+                return response;
+            });
+        }
+
+        public async Task<bool> SaveGameGroupsAsync(Dictionary<string, GameGroup> gameGroups)
+        {
+            try
+            {
+                return await _cachedService.SetAsync("GameGroupsKey", gameGroups);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return false;
+            }
         }
 
         private Card AddNumberCard(int number, CardColor color)
