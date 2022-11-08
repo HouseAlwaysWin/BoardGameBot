@@ -19,7 +19,7 @@ builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 var botConfig = builder.Configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
-builder.Services.AddHostedService<WebhookService>();
+builder.Services.AddHostedService<TGBotConfigService>();
 
 builder.Services.AddHttpClient("BoardGameBot")
        .AddTypedClient<ITelegramBotClient>(httpClient => new TelegramBotClient(botConfig.BotToken, httpClient));

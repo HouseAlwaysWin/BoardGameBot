@@ -9,7 +9,7 @@ using UnoGame.GameComponents;
 
 namespace UnoGame.Extensions
 {
-    public static class DTOMapper
+    public static class TGDtoMapper
     {
         public static IMapper CreateMap()
         {
@@ -17,7 +17,8 @@ namespace UnoGame.Extensions
             {
                 cfg.CreateMap<User, Player>()
                     .ForMember(p => p.Id, option => option.MapFrom(u => u.Id.ToString()))
-                    .ForMember(p => p.Username, option => option.MapFrom(u => $@"{u.FirstName}{u.LastName}"))
+                    .ForMember(p => p.Alias, option => option.MapFrom(u => $@"{u.FirstName}{u.LastName}"))
+                    .ForMember(p => p.Username, option => option.MapFrom(u => u.Username))
                     .ForMember(p => p.HandCards, option => option.Ignore());
             });
 #if DEBUG

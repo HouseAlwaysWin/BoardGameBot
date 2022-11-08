@@ -1,15 +1,16 @@
 ﻿using Telegram.Bot.Types.Enums;
 using Telegram.Bot;
+using UnoGame.Telegram;
 
 namespace GameBotAPI.Services
 {
-    public class WebhookService : IHostedService
+    public class TGBotConfigService : IHostedService
     {
-        private readonly ILogger<WebhookService> _logger;
+        private readonly ILogger<TGBotConfigService> _logger;
         private readonly IServiceProvider _services;
         private readonly BotConfiguration _botConfig;
 
-        public WebhookService(ILogger<WebhookService> logger,
+        public TGBotConfigService(ILogger<TGBotConfigService> logger,
                                 IServiceProvider serviceProvider,
                                 IConfiguration configuration)
         {
@@ -20,6 +21,7 @@ namespace GameBotAPI.Services
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
+            #region Setting Webhook
             using var scope = _services.CreateScope();
             var botClient = scope.ServiceProvider.GetRequiredService<ITelegramBotClient>();
 
@@ -35,6 +37,11 @@ namespace GameBotAPI.Services
                 url: webhookAddress,
                 allowedUpdates: Array.Empty<UpdateType>(),
                 cancellationToken: cancellationToken);
+            #endregion
+
+            var _botService = scope.ServiceProvider.GetRequiredService<ITelegramBotService>();
+            await _botService.InitCommands();
+
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)

@@ -161,12 +161,34 @@ namespace UnoGame
             });
         }
 
-        public async Task<bool> SaveGameGroupsAsync(Dictionary<string, GameGroup> gameGroups)
+        public async Task<ResponseInfo> GetPlayersAsync(string groupdId)
+        {
+            return await Task.Run(() =>
+            {
+                var response = new ResponseInfo();
+                if (GameGroups.ContainsKey(groupdId))
+                {
+                    var players = GameGroups[groupdId].Players;
+                    StringBuilder msgBuilder = new StringBuilder();
+                    msgBuilder.AppendLine("目前遊戲玩家人數:");
+                    for (int i = 0; i < players.Count; i++)
+                    {
+                        var player = players[i];
+                        msgBuilder.AppendLine($@"玩家{i + 1} @{player.Username}");
+                    }
+                    response.Message = msgBuilder.ToString();
+                    return response;
+                }
+                response.Message = "遊戲還未開局";
+                return response;
+            });
+        }
+
+        private async Task<bool> SaveGameGroupsAsync(Dictionary<string, GameGroup> gameGroups)
         {
             try
             {
-                return await _cachedService.SetAsync("GameGroupsKey", gameGroups);
-
+                return await _cachedService.SetAsync(GameGroupsKey, gameGroups);
             }
             catch (Exception ex)
             {

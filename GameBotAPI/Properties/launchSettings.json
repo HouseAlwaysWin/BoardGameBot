@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "TelegramGameBot": {
+    "GameBotAPI": {
       "commandName": "Project",
       "launchBrowser": true,
       "launchUrl": "swagger",

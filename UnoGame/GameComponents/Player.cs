@@ -12,6 +12,7 @@ namespace UnoGame.GameComponents
         public string Id { get; set; }
 
         public bool IsBot { get; set; }
+        public string Alias { get; set; }
 
         public string? Username { get; set; }
 
