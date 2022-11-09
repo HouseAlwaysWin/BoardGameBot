@@ -9,6 +9,8 @@ namespace UnoGame.GameComponents
     public class Card
     {
         public string Id { get; set; }
+        public string UniqueFileId { get; set; }
+        public string FileId { get; set; }
         public string Name { get; set; }
         public CardType CardType { get; set; }
         public CardColor? Color { get; set; }
@@ -27,7 +29,7 @@ namespace UnoGame.GameComponents
                 {
                     return _number;
                 }
-                return 0;
+                return -1;
             }
         }
     }

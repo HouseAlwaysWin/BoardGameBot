@@ -9,6 +9,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using Telegram.Bot.Types;
 using UnoGame.Extensions;
 using UnoGame.GameComponents;
 using UnoGame.Telegram;
@@ -18,9 +19,13 @@ namespace UnoGame
     public class GameService : IGameService
     {
         public Dictionary<string, GameGroup> GameGroups;
-        public string GameGroupsKey = "GameGroups";
         private readonly ICachedService _cachedService;
         private readonly ILogger<GameService> _logger;
+        private Dictionary<string, string> _gameGroupIdMapper;
+        public string GroupIdMapper = "GroupIdMapper";
+        public string GameGroupsKey = "GameGroups";
+
+        private string ImgSourceRootPath = @"Source/Images";
         public GameService(ICachedService cachedService, ILogger<GameService> logger)
         {
             _cachedService = cachedService;
@@ -28,7 +33,17 @@ namespace UnoGame
             GameGroups = _cachedService.GetAndSetAsync(GameGroupsKey, new Dictionary<string, GameGroup>()).Result;
         }
 
-        public async Task<ResponseInfo> NewGameAsync(string groupId, Player host)
+        public async Task<string> GetGroupId(string userId)
+        {
+            var groupIdMapper = await _cachedService.GetAsync<Dictionary<string, string>>(GroupIdMapper);
+            if (groupIdMapper != null)
+            {
+                return groupIdMapper[userId];
+            }
+            return string.Empty;
+        }
+
+        public async Task<ResponseInfo> NewGameAsync(string groupId, Player host, List<Card> baseCards)
         {
             return await Task.Run(async () =>
             {
@@ -39,77 +54,54 @@ namespace UnoGame
                     return response;
                 }
 
-                var TotalCards = new List<Card>();
-                Action<int> AddNumbers = (i) =>
-               {
-                   TotalCards.Add(AddNumberCard(i, CardColor.Red));
-                   TotalCards.Add(AddNumberCard(i, CardColor.Blue));
-                   TotalCards.Add(AddNumberCard(i, CardColor.Green));
-                   TotalCards.Add(AddNumberCard(i, CardColor.Yellow));
-               };
+                List<Card> totalCards = new List<Card>();
 
-                Action<int, CardType> AddFuncs = (i, cardType) =>
+                foreach (var card in baseCards)
                 {
-                    TotalCards.Add(AddFunctionCard(cardType, CardColor.Red));
-                    TotalCards.Add(AddFunctionCard(cardType, CardColor.Blue));
-                    TotalCards.Add(AddFunctionCard(cardType, CardColor.Green));
-                    TotalCards.Add(AddFunctionCard(cardType, CardColor.Yellow));
-                };
-
-
-                for (int i = 0; i <= 14; i++)
-                {
-                    switch (i)
+                    if (card.CardType == CardType.Number && card.Number == 0)
                     {
-                        case 0:
-                            AddNumbers(i);
-                            break;
-                        case 10:
-                            AddFuncs(i, CardType.Skip);
-                            AddFuncs(i, CardType.Skip);
-                            break;
-                        case 11:
-                            AddFuncs(i, CardType.Reverse);
-                            AddFuncs(i, CardType.Reverse);
-                            break;
-                        case 12:
-                            AddFuncs(i, CardType.DrawTwo);
-                            AddFuncs(i, CardType.DrawTwo);
-                            break;
-                        case 13:
-                            TotalCards.Add(AddWildCard());
-                            TotalCards.Add(AddWildCard());
-                            TotalCards.Add(AddWildCard());
-                            TotalCards.Add(AddWildCard());
-                            break;
-                        case 14:
-                            TotalCards.Add(AddWildDrawFourCard());
-                            TotalCards.Add(AddWildDrawFourCard());
-                            TotalCards.Add(AddWildDrawFourCard());
-                            TotalCards.Add(AddWildDrawFourCard());
-                            break;
-                        default:
-                            AddNumbers(i);
-                            AddNumbers(i);
-                            break;
+                        totalCards.Add(card);
+                    }
+                    else if (card.CardType == CardType.Number ||
+                            card.CardType == CardType.Reverse ||
+                            card.CardType == CardType.Skip ||
+                            card.CardType == CardType.DrawTwo)
+                    {
+                        totalCards.Add(card);
+                        totalCards.Add(card);
+                    }
+                    else
+                    {
+                        totalCards.Add(card);
+                        totalCards.Add(card);
+                        totalCards.Add(card);
+                        totalCards.Add(card);
                     }
                 }
-
-                TotalCards.Shuffle();
 
                 GameGroup newGameGroup = new GameGroup()
                 {
                     GroupId = groupId,
-                    Cards = TotalCards,
+                    Cards = totalCards,
                     Discards = new List<Card>(),
                     Players = new List<Player>(),
                     Host = host
                 };
+
                 if (!GameGroups.ContainsKey(groupId))
                 {
                     GameGroups.Add(groupId, newGameGroup);
                     var currentGroup = GameGroups[groupId];
                     currentGroup.Players.Add(host);
+
+                    _gameGroupIdMapper = new Dictionary<string, string>();
+                    _gameGroupIdMapper.Add(host.Id, groupId);
+                    var groupIdMapper = await _cachedService.GetAndSetAsync(GroupIdMapper, _gameGroupIdMapper);
+                    if (groupIdMapper.ContainsKey(host.Id))
+                    {
+                        groupIdMapper[host.Id] = groupId;
+                    }
+                    await _cachedService.SetAsync(GroupIdMapper, _gameGroupIdMapper);
 
                     var saveToCached = await SaveGameGroupsAsync(GameGroups);
                     if (!saveToCached)
@@ -195,58 +187,6 @@ namespace UnoGame
                 _logger.LogError(ex.ToString());
                 return false;
             }
-        }
-
-        private Card AddNumberCard(int number, CardColor color)
-        {
-            return new Card
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = $"{color}{number}",
-                CardType = CardType.Number,
-                Color = color,
-                Image = $"Source/Images/unocards/{color.ToString().ToLower()}{number}.png",
-                Number = number,
-            };
-        }
-
-        private Card AddFunctionCard(CardType cardType, CardColor color)
-        {
-            return new Card
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = $"{color}{cardType}",
-                CardType = cardType,
-                Color = color,
-                Image = $"Source/Images/unocards/{color.ToString().ToLower()}{cardType}.png",
-                Number = 0,
-            };
-        }
-
-        private Card AddWildCard()
-        {
-            return new Card
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = CardType.Wild.ToString(),
-                CardType = CardType.Wild,
-                Color = null,
-                Image = $"Source/Images/unocards/wild.png",
-                Number = 0,
-            };
-        }
-
-        private Card AddWildDrawFourCard()
-        {
-            return new Card
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = CardType.WildDrawFour.ToString(),
-                CardType = CardType.WildDrawFour,
-                Color = null,
-                Image = $"Source/Images/unocards/wildDrawFour.png",
-                Number = 0,
-            };
         }
 
     }
