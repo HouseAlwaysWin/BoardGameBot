@@ -19,7 +19,9 @@ namespace UnoGame.Extensions
                     .ForMember(p => p.Id, option => option.MapFrom(u => u.Id.ToString()))
                     .ForMember(p => p.Alias, option => option.MapFrom(u => $@"{u.FirstName}{u.LastName}"))
                     .ForMember(p => p.Username, option => option.MapFrom(u => u.Username))
-                    .ForMember(p => p.HandCards, option => option.Ignore());
+                    .ForMember(p => p.HandCards, option => option.Ignore())
+                    .ForMember(p => p.NextCard, option => option.Ignore())
+                    .ForMember(p => p.PrevCard, option => option.Ignore());
             });
 #if DEBUG
             configuration.AssertConfigurationIsValid();

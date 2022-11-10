@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 
 namespace UnoGame.GameComponents
 {
-    public class ResponseInfo
+    public class BotPlayerAction
     {
-        public bool Success { get; set; }
+        public string UserName { get; set; }
         public string Message { get; set; }
-        public List<BotPlayerAction> BotPlayActions { get; set; } = new List<BotPlayerAction>();
-        public Card FirstCard { get; set; }
+        public string Message2 { get; set; }
+        public string FileId { get; set; }
+        public Card CurrentCard { get; set; }
     }
 }

@@ -56,11 +56,11 @@ namespace UnoGame.Telegram
             _botClient = botClient;
             _gameService = gameService;
             _mapper = TGDtoMapper.CreateMap();
-            _commands = InitCommandsMapper().Result;
+            _commands = InitCommandsMapperAsync().Result;
             _cachedService = cachedService;
         }
 
-        private async Task<Dictionary<string, BotCommandInfo>> InitCommandsMapper()
+        private async Task<Dictionary<string, BotCommandInfo>> InitCommandsMapperAsync()
         {
             var botInfo = await _botClient.GetMeAsync();
             var botName = $"{botInfo.Username}";
@@ -74,12 +74,19 @@ namespace UnoGame.Telegram
             return commands;
         }
 
+        public async Task InitCommands()
+        {
+            var botCommandInfos = await GetBotCommandInfosAsync();
+            await _botClient.SetMyCommandsAsync(botCommandInfos);
+        }
+
         private async Task<List<BotCommandInfo>> GetBotCommandInfosAsync()
         {
             List<BotCommandInfo> botCommandInfos = new List<BotCommandInfo>()
             {
                 new(@$"new", "開始新局", async m => await SendNewGameAsync(m)),
                 new(@$"start", "開始遊戲", async m => await StartGameAsync(m)),
+                new(@$"end", "強制結束遊戲", async m => await EndGameAsync(m)),
                 new(@$"join", "加入遊戲", async m => await JoinPlayerAsync(m)),
                 new(@$"joinbot", "加入電腦玩家", async m => await JoinBotPlayerAsync(m)),
                 new(@$"players", "顯示目前玩家", async m => await ShowPlayersAsync(m)),
@@ -88,11 +95,6 @@ namespace UnoGame.Telegram
             return botCommandInfos;
         }
 
-        public async Task InitCommands()
-        {
-            var botCommandInfos = await GetBotCommandInfosAsync();
-            await _botClient.SetMyCommandsAsync(botCommandInfos);
-        }
 
         public async Task<StickerSet> GetCardStickersAsync(Message message)
         {
@@ -226,21 +228,21 @@ namespace UnoGame.Telegram
         {
             var handler = update.Type switch
             {
-                UpdateType.Message => BotOnMessageReceivedAsync(update.Message!),
-                UpdateType.EditedMessage => BotOnEditedMessageReceived(update.EditedMessage!),
-                UpdateType.CallbackQuery => BotOnCallbackQueryReceived(update.CallbackQuery!),
-                UpdateType.InlineQuery => BotOnInlineQueryReceived(update.InlineQuery!),
-                UpdateType.ChosenInlineResult => BotOnChosenInlineResultReceived(update.ChosenInlineResult!),
+                UpdateType.Message => BotOnMessageAsync(update.Message!),
+                UpdateType.EditedMessage => BotOnEditedMessageAsync(update.EditedMessage!),
+                UpdateType.CallbackQuery => BotOnCallbackQueryAsync(update.CallbackQuery!),
+                UpdateType.InlineQuery => BotOnInlineQueryAsync(update.InlineQuery!),
+                UpdateType.ChosenInlineResult => BotOnChosenInlineResultAsync(update.ChosenInlineResult!),
                 _ => UnknownUpdateHandlerAsync(update)
             };
         }
 
-        private async Task BotOnEditedMessageReceived(Message message)
+        private async Task BotOnEditedMessageAsync(Message message)
         {
             return;
         }
 
-        private async Task BotOnMessageReceivedAsync(Message message)
+        private async Task BotOnMessageAsync(Message message)
         {
             if (message.Type == MessageType.Text)
             {
@@ -252,7 +254,7 @@ namespace UnoGame.Telegram
             }
             else if (message.Type == MessageType.Sticker && message.ViaBot != null)
             {
-                var gameGroup = await _gameService.GetGameGrouopAsync(message.Chat.Id.ToString());
+                var gameGroup = await _gameService.GetGameGroupAsync(message.Chat.Id.ToString());
                 // to do
                 if (gameGroup != null)
                 {
@@ -383,7 +385,7 @@ namespace UnoGame.Telegram
         {
             if (!await CheckChatTypeAsync(message.Chat.Id, message.Chat.Type)) return;
 
-            var gameGroup = await _gameService.GetGameGrouopAsync(message?.Chat?.Id.ToString());
+            var gameGroup = await _gameService.GetGameGroupAsync(message?.Chat?.Id.ToString());
             if (gameGroup != null)
             {
                 if (!await CheckPlayerNumberAsync(message.Chat.Id, gameGroup.Players)) return;
@@ -399,7 +401,7 @@ namespace UnoGame.Telegram
         {
             if (!await CheckChatTypeAsync(message.Chat.Id, message.Chat.Type)) return;
 
-            var gameGroup = await _gameService.GetGameGrouopAsync(message?.Chat?.Id.ToString());
+            var gameGroup = await _gameService.GetGameGroupAsync(message?.Chat?.Id.ToString());
             if (gameGroup != null)
             {
 
@@ -415,14 +417,48 @@ namespace UnoGame.Telegram
         public async Task StartGameAsync(Message message)
         {
             var player = _mapper.Map<User, Player>(message.From);
-            var res = await _gameService.StartGame(message.Chat.Id.ToString(), player);
+            var res = await _gameService.StartGameAsync(message.Chat.Id.ToString(), player);
 
-            await _botClient.SendTextMessageAsync(message.Chat.Id, res.Message);
+            if (!string.IsNullOrEmpty(res.Message))
+            {
+                await _botClient.SendTextMessageAsync(message.Chat.Id, res.Message);
+            }
+
             if (res.Success)
             {
                 await _botClient.SendStickerAsync(message.Chat.Id, res.FirstCard.FileId);
             }
+
+
+            foreach (var bot in res.BotPlayActions)
+            {
+                if (!string.IsNullOrEmpty(bot.Message))
+                {
+                    await _botClient.SendTextMessageAsync(message.Chat.Id, bot.Message);
+
+                }
+
+                if (!string.IsNullOrEmpty(bot.FileId))
+                {
+                    await _botClient.SendStickerAsync(message.Chat.Id, bot.FileId);
+                }
+
+                if (!string.IsNullOrEmpty(bot.Message2))
+                {
+                    await _botClient.SendTextMessageAsync(message.Chat.Id, bot.Message2);
+
+                }
+            }
+
         }
+
+        public async Task EndGameAsync(Message message)
+        {
+            var player = _mapper.Map<Player>(message.From);
+            var res = await _gameService.EndGameAsync(message.Chat.Id.ToString(), player);
+            await _botClient.SendTextMessageAsync(message.Chat.Id, res.Message);
+        }
+
 
         public async Task ShowPlayersAsync(Message message)
         {
@@ -434,12 +470,11 @@ namespace UnoGame.Telegram
               text: res.Message);
         }
 
-
-        private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
+        private async Task BotOnCallbackQueryAsync(CallbackQuery callbackQuery)
         {
         }
 
-        private async Task BotOnInlineQueryReceived(InlineQuery inlineQuery)
+        private async Task BotOnInlineQueryAsync(InlineQuery inlineQuery)
         {
 
             List<InlineQueryResultCachedSticker> cards = new List<InlineQueryResultCachedSticker>();
@@ -463,7 +498,7 @@ namespace UnoGame.Telegram
             }
         }
 
-        private async Task BotOnChosenInlineResultReceived(ChosenInlineResult chosenInlineResult)
+        private async Task BotOnChosenInlineResultAsync(ChosenInlineResult chosenInlineResult)
         {
         }
 
