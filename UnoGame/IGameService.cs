@@ -13,6 +13,8 @@ namespace UnoGame
         Task<GameGroup?> GetGameGrouopByUserAsync(string userId);
         Task<ResponseInfo> StartGameAsync(string groupId, Player player);
         Task<ResponseInfo> EndGameAsync(string groupId, Player player);
+
+        Task<ResponseInfo> ShowGameStateAsync(string groupId);
         //Task<bool> SaveGameGroupsAsync(Dictionary<string, GameGroup> gameGroups);
     }
 }

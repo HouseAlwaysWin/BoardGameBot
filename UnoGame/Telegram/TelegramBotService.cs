@@ -55,7 +55,7 @@ namespace UnoGame.Telegram
             _logger = logger;
             _botClient = botClient;
             _gameService = gameService;
-            _mapper = TGDtoMapper.CreateMap();
+            _mapper = TGMapper.CreateMap();
             _commands = InitCommandsMapperAsync().Result;
             _cachedService = cachedService;
         }
@@ -90,6 +90,7 @@ namespace UnoGame.Telegram
                 new(@$"join", "加入遊戲", async m => await JoinPlayerAsync(m)),
                 new(@$"joinbot", "加入電腦玩家", async m => await JoinBotPlayerAsync(m)),
                 new(@$"players", "顯示目前玩家", async m => await ShowPlayersAsync(m)),
+                new(@$"gamestate", "顯示遊戲狀態", async m => await ShowGameStateAsync(m)),
                 new(@$"test",  "test",async m => await TestAsync(m))
             };
             return botCommandInfos;
@@ -318,36 +319,30 @@ namespace UnoGame.Telegram
                 fileInfos.Add(new FileInfo(path));
             }
 
-            Dictionary<string, GetCard> cardTypeMapper = new Dictionary<string, GetCard>()
+            List<CardTypeMapper> cardTypeMapper = new List<CardTypeMapper>()
             {
-                { @"(?<color>\w+)(?<number>\d+)\.png",
-                    (id,  uniqueFiledId,  fileId, name,number,imgUrl,color) => GetCardType(id,uniqueFiledId,fileId,name,number,imgUrl,CardType.Number,color)
-                },
-                { @"(?<color>\w+)DrawTwo.png",
-                     (id,  uniqueFiledId,  fileId, name,number,imgUrl,color) => GetCardType(id,uniqueFiledId,fileId,name,-1,imgUrl,CardType.DrawTwo,color)
-                },
-                { @"(?<color>\w+)Skip.png",
-                     (id,  uniqueFiledId,  fileId, name,number,imgUrl,color) => GetCardType(id,uniqueFiledId,fileId,name,-1,imgUrl,CardType.Skip,color)
-                },
-                { @"(?<color>\w+)Reverse.png",
-                    (id,  uniqueFiledId,  fileId, name,number,imgUrl,color)  => GetCardType(id,uniqueFiledId,fileId,name,-1,imgUrl,CardType.Reverse,color)
-                },
-                 { @"wild.png",
-                     (id,  uniqueFiledId,  fileId, name,number,imgUrl,color)  =>  GetCardType(id,uniqueFiledId,fileId,name,-1,imgUrl,CardType.Wild,null)
-                },
-                { @"wildDrawFour.png",
-                     (id,  uniqueFiledId,  fileId, name,number,imgUrl,color)  =>  GetCardType(id,uniqueFiledId,fileId,name,-1,imgUrl,CardType.WildDrawFour,null)
-                }
-            };
+                new( @"(?<color>\w+)(?<number>\d+)\.png",
+                    (id,uniqueFiledId,fileId,name,number,imgUrl,cardType,color) => GetCardType(id,uniqueFiledId,fileId,name,number,imgUrl,CardType.Number,color)),
+                new( @"(?<color>\w+)DrawTwo.png",
+                     (id,uniqueFiledId,fileId,name,number,imgUrl,cardType,color) => GetCardType(id,uniqueFiledId,fileId,name,-1,imgUrl,CardType.DrawTwo,color)),
+                new(@"(?<color>\w+)Skip.png",
+                     (id,uniqueFiledId,fileId,name,number,imgUrl,cardType,color) => GetCardType(id, uniqueFiledId, fileId, name, -1, imgUrl, CardType.Skip, color)),
+                new(@"(?<color>\w+)Reverse.png",
+                    (id,uniqueFiledId,fileId,name,number,imgUrl,cardType,color) => GetCardType(id, uniqueFiledId, fileId, name, -1, imgUrl, CardType.Reverse, color)),
+                new(@"wild.png",
+                     (id,uniqueFiledId,fileId,name,number,imgUrl,cardType,color) => GetCardType(id, uniqueFiledId, fileId, name, -1, imgUrl, CardType.Wild, null)),
+                new(@"wildDrawFour.png",
+                     (id,uniqueFiledId,fileId,name,number,imgUrl,cardType,color) => GetCardType(id, uniqueFiledId, fileId, name, -1, imgUrl, CardType.WildDrawFour, null))
+        };
 
             for (int i = 0; i < stickers.Stickers.Length; i++)
             {
                 var sticker = stickers.Stickers[i];
                 var fileInfo = fileInfos[i];
 
-                var mapCard = cardTypeMapper.FirstOrDefault(c => Regex.IsMatch(fileInfo.Name, c.Key));
+                var mapCard = cardTypeMapper.FirstOrDefault(c => Regex.IsMatch(fileInfo.Name, c.RegexPattern));
 
-                var numberStr = Regex.Matches(fileInfo.Name, mapCard.Key).Select(r => r.Groups["number"].Value).FirstOrDefault();
+                var numberStr = Regex.Matches(fileInfo.Name, mapCard.RegexPattern).Select(r => r.Groups["number"].Value).FirstOrDefault();
                 int number = -1;
                 if (!int.TryParse(numberStr, out number))
                 {
@@ -355,7 +350,7 @@ namespace UnoGame.Telegram
                 }
 
                 CardColor? color = null;
-                var colorName = Regex.Matches(fileInfo.Name, mapCard.Key).Select(r => r.Groups["color"].Value).FirstOrDefault();
+                var colorName = Regex.Matches(fileInfo.Name, mapCard.RegexPattern).Select(r => r.Groups["color"].Value).FirstOrDefault();
                 if (!string.IsNullOrEmpty(colorName))
                 {
                     var cardColorName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(colorName.ToLower());
@@ -363,12 +358,13 @@ namespace UnoGame.Telegram
                 }
                 string imgUrl = @$"{ImgSourceRootPath}/{fileInfo.Name}";
 
-                var baseCard = mapCard.Value.Invoke(
+                var baseCard = mapCard.GetCardAction.Invoke(
                     id: Guid.NewGuid().ToString("N"),
                     uniqueFiledId: sticker.FileUniqueId,
                     fileId: sticker.FileId,
                     name: fileInfo.Name,
                     number: number,
+                    cardType: CardType.Number,
                     imageUrl: imgUrl,
                     color: color);
                 baseCards.Add(baseCard);
@@ -468,6 +464,16 @@ namespace UnoGame.Telegram
             await _botClient.SendTextMessageAsync(
               chatId: message.Chat.Id,
               text: res.Message);
+        }
+
+        public async Task ShowGameStateAsync(Message message)
+        {
+            if (!await CheckChatTypeAsync(message.Chat.Id, message.Chat.Type)) return;
+
+            var res = await _gameService.ShowGameStateAsync(message?.Chat?.Id.ToString());
+            await _botClient.SendTextMessageAsync(
+                      chatId: message.Chat.Id,
+                      text: res.Message);
         }
 
         private async Task BotOnCallbackQueryAsync(CallbackQuery callbackQuery)

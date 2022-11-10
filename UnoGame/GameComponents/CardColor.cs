@@ -12,6 +12,6 @@ namespace UnoGame.GameComponents
         Yellow,
         Green,
         Blue,
-        Wild
     }
+
 }

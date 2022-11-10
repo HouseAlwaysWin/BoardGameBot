@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Numerics;
 using System.Security.Cryptography.X509Certificates;
@@ -225,10 +226,11 @@ namespace UnoGame
         }
 
 
-        public void CardNumberAction(GameGroup gameGroup, Card throwCard, Player currentPlayer, ResponseInfo res)
+        public void CardNumberAction(GameGroup gameGroup, Card? throwCard, Player currentPlayer, ResponseInfo res)
         {
             gameGroup.Discards.Push(throwCard);
             currentPlayer.HandCards.Remove(throwCard);
+            currentPlayer.NextCard = throwCard;
 
             gameGroup.PlayersQueue.Dequeue();
             gameGroup.PlayersQueue.Enqueue(currentPlayer);
@@ -239,17 +241,18 @@ namespace UnoGame
             res.BotPlayActions.Add(new BotPlayerAction
             {
                 Message = $@"玩家 @{currentPlayer.Username} 出牌:",
-                Message2 = $@"下一個玩家為：@{nextPlayer.Username}",
+                Message2 = $@"輪到玩家：@{nextPlayer.Username}",
                 FileId = $@"{throwCard.FileId}",
                 UserName = $@"{currentPlayer.Username}",
                 CurrentCard = throwCard
             });
         }
 
-        public void CardSkipAction(GameGroup gameGroup, Card throwCard, Player currentPlayer, ResponseInfo res)
+        public void CardSkipAction(GameGroup gameGroup, Card? throwCard, Player currentPlayer, ResponseInfo res)
         {
             gameGroup.Discards.Push(throwCard);
             currentPlayer.HandCards.Remove(throwCard);
+            currentPlayer.NextCard = throwCard;
 
             gameGroup.PlayersQueue.Dequeue();
             gameGroup.PlayersQueue.Enqueue(currentPlayer);
@@ -263,17 +266,18 @@ namespace UnoGame
             res.BotPlayActions.Add(new BotPlayerAction
             {
                 Message = $@"玩家 @{currentPlayer.Username} 出牌:",
-                Message2 = $@"跳過玩家 @{skipNextPlayer.Username}，下一個玩家為：@{nextPlayer.Username}",
+                Message2 = $@"跳過玩家 @{skipNextPlayer.Username}，輪到玩家：@{nextPlayer.Username}",
                 FileId = $@"{throwCard.FileId}",
                 UserName = $@"{currentPlayer.Username}",
                 CurrentCard = throwCard
             }); ;
         }
 
-        public void CardDrawTwoAction(GameGroup gameGroup, Card throwCard, Player currentPlayer, ResponseInfo res)
+        public void CardDrawTwoAction(GameGroup gameGroup, Card? throwCard, Player currentPlayer, ResponseInfo res)
         {
             gameGroup.Discards.Push(throwCard);
             currentPlayer.HandCards.Remove(throwCard);
+            currentPlayer.NextCard = throwCard;
 
             gameGroup.PlayersQueue.Dequeue();
             gameGroup.PlayersQueue.Enqueue(currentPlayer);
@@ -294,7 +298,7 @@ namespace UnoGame
             res.BotPlayActions.Add(new BotPlayerAction
             {
                 Message = $@"玩家 @{currentPlayer.Username} 出牌:",
-                Message2 = $@"玩家 @{skipNextPlayer.Username} 抽兩張牌並跳過，換下一個玩家 @{nextPlayer.Username}",
+                Message2 = $@"玩家 @{skipNextPlayer.Username} 抽兩張牌並跳過，輪到玩家： @{nextPlayer.Username}",
                 FileId = $@"{throwCard.FileId}",
                 UserName = $@"{currentPlayer.Username}",
                 CurrentCard = throwCard
@@ -302,10 +306,11 @@ namespace UnoGame
 
         }
 
-        public void CardReverseAction(GameGroup gameGroup, Card throwCard, Player currentPlayer, ResponseInfo res)
+        public void CardReverseAction(GameGroup gameGroup, Card? throwCard, Player currentPlayer, ResponseInfo res)
         {
             gameGroup.Discards.Push(throwCard);
             currentPlayer.HandCards.Remove(throwCard);
+            currentPlayer.NextCard = throwCard;
 
             gameGroup.PlayersQueue = new Queue<Player>(gameGroup.PlayersQueue.Reverse());
 
@@ -315,19 +320,20 @@ namespace UnoGame
             res.BotPlayActions.Add(new BotPlayerAction
             {
                 Message = $@"玩家 @{currentPlayer.Username} 出牌:",
-                Message2 = $@"反轉 下一個玩家 @{nextPlayer.Username}",
+                Message2 = $@"反轉，輪到玩家 @{nextPlayer.Username}",
                 FileId = $@"{throwCard.FileId}",
                 UserName = $@"{currentPlayer.Username}",
                 CurrentCard = throwCard
             }); ;
         }
 
-        public void CardWildAction(GameGroup gameGroup, Card throwCard, Player currentPlayer, ResponseInfo res)
+        public void CardWildAction(GameGroup gameGroup, Card? throwCard, Player currentPlayer, ResponseInfo res)
         {
             var copyCard = throwCard.CloneObj<Card>();
 
             gameGroup.Discards.Push(throwCard);
             currentPlayer.HandCards.Remove(throwCard);
+            currentPlayer.NextCard = throwCard;
 
             gameGroup.PlayersQueue.Dequeue();
             gameGroup.PlayersQueue.Enqueue(currentPlayer);
@@ -339,19 +345,20 @@ namespace UnoGame
             res.BotPlayActions.Add(new BotPlayerAction
             {
                 Message = $@"玩家 @{currentPlayer.Username} 出牌:",
-                Message2 = $@"顏色選擇{copyCard.Color} ， 下一個玩家 @{nextPlayer.Username}",
+                Message2 = $@"顏色選擇{copyCard.Color}，輪到玩家 @{nextPlayer.Username}",
                 FileId = $@"{copyCard.FileId}",
                 UserName = $@"{currentPlayer.Username}",
                 CurrentCard = copyCard
             }); ;
         }
 
-        public void CardWildDrawFourAction(GameGroup gameGroup, Card throwCard, Player currentPlayer, ResponseInfo res)
+        public void CardWildDrawFourAction(GameGroup gameGroup, Card? throwCard, Player currentPlayer, ResponseInfo res)
         {
             var copyCard = throwCard.CloneObj<Card>();
 
             gameGroup.Discards.Push(throwCard);
             currentPlayer.HandCards.Remove(throwCard);
+            currentPlayer.NextCard = throwCard;
 
             gameGroup.PlayersQueue.Dequeue();
             gameGroup.PlayersQueue.Enqueue(currentPlayer);
@@ -372,17 +379,19 @@ namespace UnoGame
             res.BotPlayActions.Add(new BotPlayerAction
             {
                 Message = $@"玩家 @{currentPlayer.Username} 出牌:",
-                Message2 = $@"顏色選擇{copyCard.Color} ， 下一個玩家 @{nextPlayer.Username}",
+                Message2 = $@"顏色選擇{copyCard.Color}，玩家 @{skipNextPlayer.Username} 抽四張牌並跳過，輪到玩家 @{nextPlayer.Username}",
                 FileId = $@"{copyCard.FileId}",
                 UserName = $@"{currentPlayer.Username}",
                 CurrentCard = copyCard
             });
         }
 
-        public void CardPassAction(GameGroup gameGroup, Player currentPlayer, ResponseInfo res)
+        public void CardPassAction(GameGroup gameGroup, Card? throwCard, Player currentPlayer, ResponseInfo res)
         {
             var newCard = gameGroup.Cards.Pop();
             currentPlayer.HandCards.Add(newCard);
+            currentPlayer.NextCard = throwCard;
+
             var prevPlayer = gameGroup.PlayersQueue.LastOrDefault();
 
             gameGroup.PlayersQueue.Dequeue();
@@ -395,18 +404,75 @@ namespace UnoGame
             }
             else
             {
-                nextPlayer.PrevCard = currentPlayer.PrevCard;
+                nextPlayer.PrevCard = throwCard;
             }
 
             res.BotPlayActions.Add(new BotPlayerAction
             {
-                Message = $@"玩家 @{currentPlayer.Username} Pass",
+                Message = $@"玩家 @{currentPlayer.Username} Pass，輪到玩家 @{nextPlayer.Username}",
                 FileId = $@"",
                 UserName = $@"{currentPlayer.Username}",
                 CurrentCard = prevPlayer.PrevCard
             }); ;
         }
 
+        public void HandleBotAction(GameGroup gameGroup, ResponseInfo res)
+        {
+            while (gameGroup.PlayersQueue.Peek().IsBot)
+            {
+                var newQueue = new Queue<Player>();
+                var currentPlayer = gameGroup.PlayersQueue.Peek();
+                var hasCardWithType = currentPlayer.HandCards.FirstOrDefault(c => c.CardType == currentPlayer.PrevCard.CardType);
+                var hasCardWithColor = currentPlayer.HandCards.FirstOrDefault(c => c.Color == currentPlayer.PrevCard.Color);
+                var hasWildCard = currentPlayer.HandCards.FirstOrDefault(c => c.CardType == CardType.Wild || c.CardType == CardType.WildDrawFour);
+
+                // 判斷出啥牌
+                if (hasCardWithColor != null && hasCardWithColor.CardType == CardType.Number && hasCardWithColor.Number == currentPlayer.PrevCard.Number)
+                {
+                    CardNumberAction(gameGroup, hasCardWithColor, currentPlayer, res);
+                }
+                else if (hasCardWithType != null && hasCardWithType.CardType == CardType.Number && hasCardWithType.Number == currentPlayer.PrevCard.Number)
+                {
+                    CardNumberAction(gameGroup, hasCardWithType, currentPlayer, res);
+                }
+                else if (hasCardWithColor != null && hasCardWithColor.CardType == CardType.Skip)
+                {
+                    CardSkipAction(gameGroup, hasCardWithColor, currentPlayer, res);
+                }
+                else if (hasCardWithType != null && hasCardWithType.CardType == CardType.Skip)
+                {
+                    CardSkipAction(gameGroup, hasCardWithType, currentPlayer, res);
+                }
+                else if (hasCardWithColor != null && hasCardWithColor.CardType == CardType.DrawTwo)
+                {
+                    CardDrawTwoAction(gameGroup, hasCardWithColor, currentPlayer, res);
+                }
+                else if (hasCardWithType != null && hasCardWithType.CardType == CardType.DrawTwo)
+                {
+                    CardDrawTwoAction(gameGroup, hasCardWithType, currentPlayer, res);
+                }
+                else if (hasCardWithColor != null && hasCardWithColor.CardType == CardType.Reverse)
+                {
+                    CardReverseAction(gameGroup, hasCardWithColor, currentPlayer, res);
+                }
+                else if (hasCardWithType != null && hasCardWithType.CardType == CardType.Reverse)
+                {
+                    CardReverseAction(gameGroup, hasCardWithType, currentPlayer, res);
+                }
+                else if (hasWildCard != null && hasWildCard.CardType == CardType.Wild)
+                {
+                    CardWildAction(gameGroup, hasWildCard, currentPlayer, res);
+                }
+                else if (hasWildCard != null && hasWildCard.CardType == CardType.WildDrawFour)
+                {
+                    CardWildDrawFourAction(gameGroup, hasWildCard, currentPlayer, res);
+                }
+                else
+                {
+                    CardPassAction(gameGroup, currentPlayer.PrevCard, currentPlayer, res);
+                }
+            }
+        }
 
         public async Task<ResponseInfo> StartGameAsync(string groupId, Player player)
         {
@@ -490,62 +556,66 @@ namespace UnoGame
             var firstPlayer = gameGroup.PlayersQueue.Peek();
             firstPlayer.PrevCard = res.FirstCard;
 
-            while (gameGroup.PlayersQueue.Peek().IsBot)
-            {
-                botMsgBuilder.AppendLine();
-                botMsgBuilder.AppendLine($@"輪到玩家: @{gameGroup.PlayersQueue.Peek().Username} ...");
+            HandleBotAction(gameGroup, res);
 
-                var newQueue = new Queue<Player>();
-                var currentPlayer = gameGroup.PlayersQueue.Peek();
-                var hasCardWithType = currentPlayer.HandCards.FirstOrDefault(c => c.CardType == currentPlayer.PrevCard.CardType);
-                var hasCardWithColor = currentPlayer.HandCards.FirstOrDefault(c => c.Color == currentPlayer.PrevCard.Color);
-                var hasWildCard = currentPlayer.HandCards.FirstOrDefault(c => c.CardType == CardType.Wild || c.CardType == CardType.WildDrawFour);
-                // 判斷出啥牌
-                if (hasCardWithColor != null && hasCardWithColor.CardType == CardType.Number && hasCardWithColor.Number == currentPlayer.PrevCard.Number)
-                {
-                    CardNumberAction(gameGroup, hasCardWithColor, currentPlayer, res);
-                }
-                else if (hasCardWithType != null && hasCardWithType.CardType == CardType.Number && hasCardWithType.Number == currentPlayer.PrevCard.Number)
-                {
-                    CardNumberAction(gameGroup, hasCardWithType, currentPlayer, res);
-                }
-                else if (hasCardWithColor != null && hasCardWithColor.CardType == CardType.Skip)
-                {
-                    CardSkipAction(gameGroup, hasCardWithColor, currentPlayer, res);
-                }
-                else if (hasCardWithType != null && hasCardWithType.CardType == CardType.Skip)
-                {
-                    CardSkipAction(gameGroup, hasCardWithType, currentPlayer, res);
-                }
-                else if (hasCardWithColor != null && hasCardWithColor.CardType == CardType.DrawTwo)
-                {
-                    CardDrawTwoAction(gameGroup, hasCardWithColor, currentPlayer, res);
-                }
-                else if (hasCardWithType != null && hasCardWithType.CardType == CardType.DrawTwo)
-                {
-                    CardDrawTwoAction(gameGroup, hasCardWithType, currentPlayer, res);
-                }
-                else if (hasCardWithColor != null && hasCardWithColor.CardType == CardType.Reverse)
-                {
-                    CardReverseAction(gameGroup, hasCardWithColor, currentPlayer, res);
-                }
-                else if (hasCardWithType != null && hasCardWithType.CardType == CardType.Reverse)
-                {
-                    CardReverseAction(gameGroup, hasCardWithType, currentPlayer, res);
-                }
-                else if (hasWildCard != null && hasWildCard.CardType == CardType.Wild)
-                {
-                    CardWildAction(gameGroup, hasWildCard, currentPlayer, res);
-                }
-                else if (hasWildCard != null && hasWildCard.CardType == CardType.WildDrawFour)
-                {
-                    CardWildDrawFourAction(gameGroup, hasWildCard, currentPlayer, res);
-                }
-                else
-                {
-                    CardPassAction(gameGroup, currentPlayer, res);
-                }
-            }
+            //while (gameGroup.PlayersQueue.Peek().IsBot)
+            //{
+            //    botMsgBuilder.AppendLine();
+            //    botMsgBuilder.AppendLine($@"輪到玩家: @{gameGroup.PlayersQueue.Peek().Username} ...");
+
+            //    var newQueue = new Queue<Player>();
+            //    var currentPlayer = gameGroup.PlayersQueue.Peek();
+            //    var hasCardWithType = currentPlayer.HandCards.FirstOrDefault(c => c.CardType == currentPlayer.PrevCard.CardType);
+            //    var hasCardWithColor = currentPlayer.HandCards.FirstOrDefault(c => c.Color == currentPlayer.PrevCard.Color);
+            //    var hasWildCard = currentPlayer.HandCards.FirstOrDefault(c => c.CardType == CardType.Wild || c.CardType == CardType.WildDrawFour);
+
+
+            //    // 判斷出啥牌
+            //    if (hasCardWithColor != null && hasCardWithColor.CardType == CardType.Number && hasCardWithColor.Number == currentPlayer.PrevCard.Number)
+            //    {
+            //        CardNumberAction(gameGroup, hasCardWithColor, currentPlayer, res);
+            //    }
+            //    else if (hasCardWithType != null && hasCardWithType.CardType == CardType.Number && hasCardWithType.Number == currentPlayer.PrevCard.Number)
+            //    {
+            //        CardNumberAction(gameGroup, hasCardWithType, currentPlayer, res);
+            //    }
+            //    else if (hasCardWithColor != null && hasCardWithColor.CardType == CardType.Skip)
+            //    {
+            //        CardSkipAction(gameGroup, hasCardWithColor, currentPlayer, res);
+            //    }
+            //    else if (hasCardWithType != null && hasCardWithType.CardType == CardType.Skip)
+            //    {
+            //        CardSkipAction(gameGroup, hasCardWithType, currentPlayer, res);
+            //    }
+            //    else if (hasCardWithColor != null && hasCardWithColor.CardType == CardType.DrawTwo)
+            //    {
+            //        CardDrawTwoAction(gameGroup, hasCardWithColor, currentPlayer, res);
+            //    }
+            //    else if (hasCardWithType != null && hasCardWithType.CardType == CardType.DrawTwo)
+            //    {
+            //        CardDrawTwoAction(gameGroup, hasCardWithType, currentPlayer, res);
+            //    }
+            //    else if (hasCardWithColor != null && hasCardWithColor.CardType == CardType.Reverse)
+            //    {
+            //        CardReverseAction(gameGroup, hasCardWithColor, currentPlayer, res);
+            //    }
+            //    else if (hasCardWithType != null && hasCardWithType.CardType == CardType.Reverse)
+            //    {
+            //        CardReverseAction(gameGroup, hasCardWithType, currentPlayer, res);
+            //    }
+            //    else if (hasWildCard != null && hasWildCard.CardType == CardType.Wild)
+            //    {
+            //        CardWildAction(gameGroup, hasWildCard, currentPlayer, res);
+            //    }
+            //    else if (hasWildCard != null && hasWildCard.CardType == CardType.WildDrawFour)
+            //    {
+            //        CardWildDrawFourAction(gameGroup, hasWildCard, currentPlayer, res);
+            //    }
+            //    else
+            //    {
+            //        CardPassAction(gameGroup, currentPlayer.PrevCard, currentPlayer, res);
+            //    }
+            //}
 
             var saveToCached = await SaveGameGroupAsync(gameGroup);
             if (!saveToCached)
@@ -613,6 +683,58 @@ namespace UnoGame
             return response;
         }
 
+        public async Task<ResponseInfo> ShowGameStateAsync(string groupId)
+        {
+            ResponseInfo res = new ResponseInfo();
+            StringBuilder gameStateBuilder = new StringBuilder();
+            var gameGroup = await GetGameGroupAsync(groupId);
+            if (gameGroup != null)
+            {
+                if (gameGroup.PlayersQueue.Count > 0)
+                {
+                    var currentPlayer = gameGroup.PlayersQueue.Peek();
+                    gameStateBuilder.AppendLine($@"目前輪到玩家：@{currentPlayer.Username}");
+                    gameStateBuilder.AppendLine();
+                    string type = string.Empty;
+                    if (currentPlayer.PrevCard.CardType == CardType.Number)
+                    {
+                        type = TGMapper.CardTypesMapper.ContainsKey(currentPlayer.PrevCard.CardType) ?
+                                                    $"{TGMapper.CardTypesMapper[currentPlayer.PrevCard.CardType]}{currentPlayer.PrevCard.Number}" : string.Empty;
+                    }
+                    else
+                    {
+                        type = TGMapper.CardTypesMapper.ContainsKey(currentPlayer.PrevCard.CardType) ?
+                            TGMapper.CardTypesMapper[currentPlayer.PrevCard.CardType] : string.Empty;
+                    }
+
+                    string color = string.Empty;
+                    if (currentPlayer.PrevCard.Color.HasValue)
+                    {
+                        color = TGMapper.CardColorsMapper.ContainsKey(currentPlayer.PrevCard.Color.Value) ?
+                           TGMapper.CardColorsMapper[currentPlayer.PrevCard.Color.Value] : string.Empty;
+                    }
+
+                    string cardName = $"{color}{type}";
+                    gameStateBuilder.AppendLine($@"目前牌：{cardName}");
+                    gameStateBuilder.AppendLine();
+                    gameStateBuilder.AppendLine("目前玩家順序和手牌數量：");
+                    gameStateBuilder.AppendLine();
+                    for (int i = 0; i < gameGroup.PlayersQueue.Count; i++)
+                    {
+                        var player = gameGroup.PlayersQueue.ToList()[i];
+                        gameStateBuilder.AppendLine($@"{i + 1}. 玩家名稱：@{player.Username} - 共{player.HandCards.Count}張");
+                    }
+                }
+
+                gameStateBuilder.AppendLine();
+                gameStateBuilder.AppendLine($@"牌疊數：{gameGroup.Cards.Count} 張");
+                gameStateBuilder.AppendLine();
+                gameStateBuilder.AppendLine($@"棄牌數：{gameGroup.Discards.Count} 張");
+            }
+            res.Success = true;
+            res.Message = gameStateBuilder.ToString();
+            return res;
+        }
         public async Task<bool> SaveGameGroupAsync(GameGroup gameGroup)
         {
             try
