@@ -78,9 +78,11 @@ namespace UnoGame.Telegram
         {
             List<BotCommandInfo> botCommandInfos = new List<BotCommandInfo>()
             {
-                new(@$"new", "開始新局", async m => await SendNewGame(m)),
-                new(@$"join", "加入遊戲", async m => await JoinPlayer(m)),
-                new(@$"players", "顯示目前玩家", async m => await ShowPlayers(m)),
+                new(@$"new", "開始新局", async m => await SendNewGameAsync(m)),
+                new(@$"start", "開始遊戲", async m => await StartGameAsync(m)),
+                new(@$"join", "加入遊戲", async m => await JoinPlayerAsync(m)),
+                new(@$"joinbot", "加入電腦玩家", async m => await JoinBotPlayerAsync(m)),
+                new(@$"players", "顯示目前玩家", async m => await ShowPlayersAsync(m)),
                 new(@$"test",  "test",async m => await TestAsync(m))
             };
             return botCommandInfos;
@@ -222,11 +224,10 @@ namespace UnoGame.Telegram
 
         public async Task EchoAsync(Update update)
         {
-
             var handler = update.Type switch
             {
-                UpdateType.Message => BotOnMessageReceived(update.Message!),
-                UpdateType.EditedMessage => BotOnMessageReceived(update.EditedMessage!),
+                UpdateType.Message => BotOnMessageReceivedAsync(update.Message!),
+                UpdateType.EditedMessage => BotOnEditedMessageReceived(update.EditedMessage!),
                 UpdateType.CallbackQuery => BotOnCallbackQueryReceived(update.CallbackQuery!),
                 UpdateType.InlineQuery => BotOnInlineQueryReceived(update.InlineQuery!),
                 UpdateType.ChosenInlineResult => BotOnChosenInlineResultReceived(update.ChosenInlineResult!),
@@ -234,26 +235,52 @@ namespace UnoGame.Telegram
             };
         }
 
-        private async Task BotOnMessageReceived(Message message)
+        private async Task BotOnEditedMessageReceived(Message message)
         {
-            if (message.Type != MessageType.Text)
-                return;
+            return;
+        }
 
-            var text = string.IsNullOrEmpty(message.Text) ? "" : message.Text;
-            if (_commands.ContainsKey(text))
+        private async Task BotOnMessageReceivedAsync(Message message)
+        {
+            if (message.Type == MessageType.Text)
             {
-                _commands[text].Action.Invoke(message);
+                var text = string.IsNullOrEmpty(message.Text) ? "" : message.Text;
+                if (_commands.ContainsKey(text))
+                {
+                    _commands[text].Action.Invoke(message);
+                }
+            }
+            else if (message.Type == MessageType.Sticker && message.ViaBot != null)
+            {
+                var gameGroup = await _gameService.GetGameGrouopAsync(message.Chat.Id.ToString());
+                // to do
+                if (gameGroup != null)
+                {
+                    await _botClient.SendStickerAsync(message.Chat.Id, message.Sticker.FileId);
+                }
             }
 
         }
 
-        public async Task<bool> CheckChatType(ChatId id, ChatType chatType)
+        public async Task<bool> CheckChatTypeAsync(ChatId id, ChatType chatType)
         {
             if (chatType != ChatType.Group)
             {
                 await _botClient.SendTextMessageAsync(
                 chatId: id,
                 text: "請先把機器人加入到群組");
+                return false;
+            }
+            return true;
+        }
+
+        public async Task<bool> CheckPlayerNumberAsync(ChatId id, List<Player> players)
+        {
+            if (players.Count == 10)
+            {
+                await _botClient.SendTextMessageAsync(
+                chatId: id,
+                text: "已達最大玩家人數");
                 return false;
             }
             return true;
@@ -275,9 +302,9 @@ namespace UnoGame.Telegram
         }
 
 
-        public async Task SendNewGame(Message message)
+        public async Task SendNewGameAsync(Message message)
         {
-            if (!await CheckChatType(message.Chat.Id, message.Chat.Type)) return;
+            if (!await CheckChatTypeAsync(message.Chat.Id, message.Chat.Type)) return;
 
             var stickers = await GetCardStickersAsync(message);
             List<Card> baseCards = new List<Card>();
@@ -334,8 +361,14 @@ namespace UnoGame.Telegram
                 }
                 string imgUrl = @$"{ImgSourceRootPath}/{fileInfo.Name}";
 
-                var baseCard = mapCard.Value.Invoke(Guid.NewGuid().ToString("N"),
-                    sticker.FileId, sticker.FileUniqueId, fileInfo.Name, number, imgUrl, color);
+                var baseCard = mapCard.Value.Invoke(
+                    id: Guid.NewGuid().ToString("N"),
+                    uniqueFiledId: sticker.FileUniqueId,
+                    fileId: sticker.FileId,
+                    name: fileInfo.Name,
+                    number: number,
+                    imageUrl: imgUrl,
+                    color: color);
                 baseCards.Add(baseCard);
             }
 
@@ -346,20 +379,54 @@ namespace UnoGame.Telegram
                 text: res.Message);
         }
 
-        public async Task JoinPlayer(Message message)
+        public async Task JoinPlayerAsync(Message message)
         {
-            if (await CheckChatType(message.Chat.Id, message.Chat.Type)) return;
+            if (!await CheckChatTypeAsync(message.Chat.Id, message.Chat.Type)) return;
 
-            var newPlayer = _mapper.Map<Player>(message.From);
-            var res = await _gameService.JoinPlayerAsync(message?.Chat?.Id.ToString(), newPlayer);
-            await _botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: res.Message);
+            var gameGroup = await _gameService.GetGameGrouopAsync(message?.Chat?.Id.ToString());
+            if (gameGroup != null)
+            {
+                if (!await CheckPlayerNumberAsync(message.Chat.Id, gameGroup.Players)) return;
+                var newPlayer = _mapper.Map<Player>(message.From);
+                var res = await _gameService.JoinPlayerAsync(message?.Chat?.Id.ToString(), newPlayer);
+                await _botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: res.Message);
+            }
         }
 
-        public async Task ShowPlayers(Message message)
+        public async Task JoinBotPlayerAsync(Message message)
         {
-            if (await CheckChatType(message.Chat.Id, message.Chat.Type)) return;
+            if (!await CheckChatTypeAsync(message.Chat.Id, message.Chat.Type)) return;
+
+            var gameGroup = await _gameService.GetGameGrouopAsync(message?.Chat?.Id.ToString());
+            if (gameGroup != null)
+            {
+
+                if (!await CheckPlayerNumberAsync(message.Chat.Id, gameGroup.Players)) return;
+                var botPlayerCount = gameGroup.Players.Where(p => p.IsBot).Count() + 1;
+                var res = await _gameService.JoinBotPlayerAsync(message?.Chat?.Id.ToString(), botPlayerCount);
+                await _botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: res.Message);
+            }
+        }
+
+        public async Task StartGameAsync(Message message)
+        {
+            var player = _mapper.Map<User, Player>(message.From);
+            var res = await _gameService.StartGame(message.Chat.Id.ToString(), player);
+
+            await _botClient.SendTextMessageAsync(message.Chat.Id, res.Message);
+            if (res.Success)
+            {
+                await _botClient.SendStickerAsync(message.Chat.Id, res.FirstCard.FileId);
+            }
+        }
+
+        public async Task ShowPlayersAsync(Message message)
+        {
+            if (!await CheckChatTypeAsync(message.Chat.Id, message.Chat.Type)) return;
 
             var res = await _gameService.GetPlayersAsync(message?.Chat?.Id.ToString());
             await _botClient.SendTextMessageAsync(
@@ -376,56 +443,21 @@ namespace UnoGame.Telegram
         {
 
             List<InlineQueryResultCachedSticker> cards = new List<InlineQueryResultCachedSticker>();
-            var botInfo = await _botClient.GetMeAsync();
-            var sourceRootPath = @$"{AppContext.BaseDirectory}\Source\Images";
+            //var botInfo = await _botClient.GetMeAsync();
+            //var sourceRootPath = @$"{AppContext.BaseDirectory}\Source\Images";
             var gameGroups = await _cachedService.GetAsync<Dictionary<string, GameGroup>>("GameGroups");
-            var groupId = await _gameService.GetGroupId(inlineQuery.From.Id.ToString());
+            var groupId = await _gameService.GetGroupIdAsync(inlineQuery.From.Id.ToString());
             if (gameGroups.ContainsKey(groupId))
             {
                 var gameGroup = gameGroups[groupId];
-                foreach (var c in gameGroup.Cards)
+                var player = gameGroup.Players.FirstOrDefault(u => u.Id == inlineQuery.From.Id.ToString());
+                if (player != null)
                 {
-                    cards.Add(new InlineQueryResultCachedSticker(c.UniqueFileId, c.FileId));
+                    foreach (var c in player.HandCards)
+                    {
+                        cards.Add(new InlineQueryResultCachedSticker(Guid.NewGuid().ToString(), c.FileId));
+                    }
                 }
-
-
-
-
-
-                //var filesPath = Directory.GetFiles(sourceRootPath);
-
-                //var fileBytes = await IOFile.ReadAllBytesAsync(filesPath[0]);
-                //using (Image image = Image.Load(fileBytes))
-                //using (MemoryStream ms = new MemoryStream())
-                //{
-                //    image.SaveAsJpeg(ms);
-                //    ms.Seek(0, SeekOrigin.Begin);
-
-                //    //await _botClient.SendPhotoAsync(
-                //    //    chatId: inlineQuery.,
-                //    //    new InputOnlineFile(ms));
-
-                //    var file = await _botClient.UploadStickerFileAsync(
-                //        userId: botInfo.Id,
-                //        pngSticker: new InputFileStream(ms));
-
-                //    cards.Add(new InlineQueryResultCachedSticker(file.FileUniqueId, file.FileId));
-                //    //await _botClient.SendPhotoAsync(
-                //    //    chatId: botInfo.Id,
-                //    //    file.FileId);
-                //    //await _botClient.SendStickerAsync(
-                //    //    chatId: message.Chat.Id,
-                //    //    sticker: file.FileId);
-                //}
-
-
-                //List<InlineQueryResultArticle> cards = new List<InlineQueryResultArticle>
-                //{
-                //    new InlineQueryResultArticle(Guid.NewGuid().ToString(),"奶妹",new InputTextMessageContent("奶妹")),
-                //    new InlineQueryResultArticle(Guid.NewGuid().ToString(),"坑妹1號",new InputTextMessageContent("坑妹1號")),
-                //    new InlineQueryResultArticle(Guid.NewGuid().ToString(),"坑妹2號",new InputTextMessageContent("坑妹2號")),
-                //    new InlineQueryResultArticle(Guid.NewGuid().ToString(),"坑妹3號",new InputTextMessageContent("坑妹3號"))
-                //};
 
                 await _botClient.AnswerInlineQueryAsync(inlineQuery.Id, cards, 0, true);
             }

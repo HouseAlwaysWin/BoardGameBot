@@ -22,6 +22,6 @@ namespace UnoGame.GameComponents
 
         public bool? CanReadAllGroupMessages { get; set; }
         public bool? SupportsInlineQueries { get; set; }
-        public List<Card> HandCards { get; set; }
+        public List<Card> HandCards { get; set; } = new List<Card>();
     }
 }

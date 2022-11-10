@@ -11,8 +11,8 @@ namespace UnoGame.GameComponents
     {
         public string GroupId { get; set; }
         public List<Player> Players { get; set; }
-        public List<Card> Cards { get; set; }
-        public List<Card> Discards { get; set; }
+        public Stack<Card> Cards { get; set; } = new Stack<Card>();
+        public Stack<Card> Discards { get; set; } = new Stack<Card>();
         public Player Host { get; set; }
 
     }
