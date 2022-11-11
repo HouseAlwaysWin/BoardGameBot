@@ -15,6 +15,7 @@ namespace UnoGame.GameComponents
         public bool IsStart { get; set; }
         public Stack<Card> Cards { get; set; } = new Stack<Card>();
         public Stack<Card> Discards { get; set; } = new Stack<Card>();
+        public Card CardOnBoard { get; set; }
         public Player Host { get; set; }
 
     }

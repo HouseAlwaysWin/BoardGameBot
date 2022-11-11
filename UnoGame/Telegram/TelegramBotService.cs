@@ -208,10 +208,10 @@ namespace UnoGame.Telegram
                                 },
               });
 
-            await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                 text: "Choose",
-                                                 replyMarkup: inlineKeyboard);
 
+            var msg = await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                   text: "Choose",
+                                                   replyMarkup: inlineKeyboard);
 
 
             //ReplyKeyboardMarkup replyKeyboardMarkup = new(
@@ -268,22 +268,19 @@ namespace UnoGame.Telegram
                 {
                     var res = await _gameService.HandlePlayerAction(playerId, uniqueFiledId, null);
                     var gameGroup = await _gameService.GetGameGroupAsync(groupId);
-                    var currentPlayer = gameGroup.Players.Peek();
-                    if (currentPlayer.IsBot)
+                    if (gameGroup != null)
                     {
-                        await _gameService.HandleBotActionAsync(gameGroup, res);
-                    }
+                        var currentPlayer = gameGroup.Players.Peek();
+                        if (currentPlayer.IsBot)
+                        {
+                            await _gameService.HandleBotActionAsync(gameGroup, res);
+                        }
 
-
-                    if (res.NeedSelectedColor)
-                    {
-                        //var red = JsonConvert.SerializeObject(new CallBackDataMapper(SelectedColorKey, CardColor.Red.ToString(), uniqueFiledId));
-                        //var blue = JsonConvert.SerializeObject(new CallBackDataMapper(SelectedColorKey, CardColor.Blue.ToString(), ""));
-                        //var green = JsonConvert.SerializeObject(new CallBackDataMapper(SelectedColorKey, CardColor.Green.ToString(), ""));
-                        //var yellow = JsonConvert.SerializeObject(new CallBackDataMapper(SelectedColorKey, CardColor.Yellow.ToString(), ""));
-                        InlineKeyboardMarkup inlineKeyboard = new(
-                          new[]
-                          {
+                        if (res.NeedSelectedColor)
+                        {
+                            InlineKeyboardMarkup inlineKeyboard = new(
+                              new[]
+                              {
                                 new []
                                 {
                                     // data: key:colorNumber;stickerId
@@ -295,15 +292,16 @@ namespace UnoGame.Telegram
                                     InlineKeyboardButton.WithCallbackData("綠色", $"color:3;{uniqueFiledId}"),
                                     InlineKeyboardButton.WithCallbackData("黃色", $"color;4;{uniqueFiledId}"),
                                 },
-                          });
-                        var player = await _gameService.GetPlayerAsync(playerId);
+                              });
+                            var player = await _gameService.GetPlayerAsync(playerId);
 
-                        res.AddPlayerAction(
-                            message: $"玩家 @{player.Username} 請選擇顏色：",
-                            replyMarkup: inlineKeyboard);
+                            res.AddPlayerAction(
+                                message: $"玩家 @{player.Username} 請選擇顏色：",
+                                replyMarkup: inlineKeyboard);
+                        }
+
+                        await HandleResponseAsync(groupId, res);
                     }
-
-                    await HandleResponseAsync(groupId, res);
                 }
 
             }
@@ -488,7 +486,14 @@ namespace UnoGame.Telegram
                 var currentPlayer = gameGroup.Players.Peek();
                 if (playerId == currentPlayer.Id)
                 {
-                    var res = await _gameService.HandlePlayerAction(playerId, currentPlayer.PrevCard.UniqueFileId, null, true);
+                    var res = await _gameService.HandlePlayerAction(playerId, gameGroup.CardOnBoard.UniqueFileId, null, true);
+                    gameGroup = await _gameService.GetGameGroupAsync(groupId);
+                    var nextPlayer = gameGroup.Players.Peek();
+                    if (nextPlayer.IsBot)
+                    {
+                        await _gameService.HandleBotActionAsync(gameGroup, res);
+                    }
+
                     await HandleResponseAsync(groupId, res);
                 }
                 else
@@ -522,6 +527,7 @@ namespace UnoGame.Telegram
         private async Task BotOnCallbackQueryAsync(CallbackQuery callbackQuery)
         {
 
+
             var groupId = callbackQuery.Message?.Chat?.Id.ToString();
             var playerId = callbackQuery.From.Id.ToString();
             var gameGroup = await _gameService.GetGameGroupAsync(groupId);
@@ -535,14 +541,17 @@ namespace UnoGame.Telegram
             {
                 if (key == "color")
                 {
+                    // remove selected keyboard
+                    await _botClient.EditMessageReplyMarkupAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, null);
                     var color = TGMapper.CallbackColorMapper[colorNumber];
-
                     var res = await _gameService.HandlePlayerAction(playerId, uniqueFiledId, color);
+                    gameGroup = await _gameService.GetGameGroupAsync(groupId);
                     var nextPlayer = gameGroup.Players.Peek();
                     if (nextPlayer.IsBot)
                     {
                         await _gameService.HandleBotActionAsync(gameGroup, res);
                     }
+                    await HandleResponseAsync(groupId, res);
                 }
             }
             else
