@@ -10,6 +10,7 @@ namespace UnoGame.GameComponents
     public class Player
     {
         public string Id { get; set; }
+        public int Index { get; set; }
 
         public bool IsBot { get; set; }
         public string Alias { get; set; }
@@ -25,5 +26,15 @@ namespace UnoGame.GameComponents
         public List<Card> HandCards { get; set; } = new List<Card>();
         public Card NextCard { get; set; }
         public Card PrevCard { get; set; }
+
+        public void RemoveHandCards(string uniqueFileId)
+        {
+            this.HandCards = this.HandCards.Where(c => c.UniqueFileId == uniqueFileId).ToList();
+        }
+
+        public void RemoveHandCards(Card card)
+        {
+            this.HandCards = this.HandCards.Where(c => c.UniqueFileId == card.UniqueFileId).ToList();
+        }
     }
 }

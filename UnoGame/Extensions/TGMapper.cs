@@ -29,6 +29,19 @@ namespace UnoGame.Extensions
             { CardColor.Green, "綠色" },
         };
 
+        public static Dictionary<int, CardColor> CallbackColorMapper = new Dictionary<int, CardColor>
+        {
+            { 1,CardColor.Red  },
+            { 2,CardColor.Blue  },
+            { 3,CardColor.Green  },
+            { 4,CardColor.Yellow  }
+        };
+
+        //public static List<CallBackMapper> CallBackMappers = new List<CallBackMapper>
+        //{
+        //    new CallBackMapper{}
+        //};
+
         public static IMapper CreateMap()
         {
             var configuration = new MapperConfiguration(cfg =>
@@ -37,6 +50,7 @@ namespace UnoGame.Extensions
                     .ForMember(p => p.Id, option => option.MapFrom(u => u.Id.ToString()))
                     .ForMember(p => p.Alias, option => option.MapFrom(u => $@"{u.FirstName}{u.LastName}"))
                     .ForMember(p => p.Username, option => option.MapFrom(u => u.Username))
+                    .ForMember(p => p.Index, option => option.Ignore())
                     .ForMember(p => p.HandCards, option => option.Ignore())
                     .ForMember(p => p.NextCard, option => option.Ignore())
                     .ForMember(p => p.PrevCard, option => option.Ignore());
