@@ -20,7 +20,7 @@ namespace UnoGame.Extensions
             { CardType.WildDrawFour, "+4萬用卡" },
         };
 
-        public static Dictionary<CardColor?, string> CardColorsMapper = new Dictionary<CardColor?, string>()
+        public static Dictionary<CardColor, string> CardColorsMapper = new Dictionary<CardColor, string>()
         {
             { CardColor.Red, "紅色" },
             { CardColor.Blue, "藍色" },
@@ -45,7 +45,7 @@ namespace UnoGame.Extensions
             return string.Empty;
         }
 
-        public static string GetCardColorName(this CardColor? cardColor)
+        public static string GetCardColorName(this CardColor cardColor)
         {
             if (CardColorsMapper.TryGetValue(cardColor, out var result))
             {
