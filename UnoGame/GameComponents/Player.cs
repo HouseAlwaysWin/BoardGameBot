@@ -27,14 +27,14 @@ namespace UnoGame.GameComponents
         //public Card NextCard { get; set; }
         //public Card PrevCard { get; set; }
 
-        public void RemoveHandCards(string uniqueFileId)
+        public void RemoveHandCards(string id)
         {
-            this.HandCards = this.HandCards.Where(c => c.UniqueFileId == uniqueFileId).ToList();
+            this.HandCards = this.HandCards.Where(c => c.Id == id).ToList();
         }
 
         public void RemoveHandCards(Card card)
         {
-            this.HandCards = this.HandCards.Where(c => c.UniqueFileId != card.UniqueFileId).ToList();
+            this.HandCards = this.HandCards.Where(c => c.Id != card.Id).ToList();
         }
     }
 }

@@ -9,16 +9,16 @@ namespace UnoGame.GameComponents
 {
     public class ResponseInfo
     {
-        public bool Success { get; set; }
+        //public bool Success { get; set; }
         //public string Message { get; set; }
         public Queue<PlayerAction> PlayerActions { get; set; }
         public Card Card { get; set; }
 
         public bool NeedSelectedColor { get; set; }
 
-        public ResponseInfo(bool success = false, Queue<PlayerAction> playerActions = null, Card card = null, bool needSelectedColor = false)
+        public ResponseInfo(Queue<PlayerAction> playerActions = null, Card card = null, bool needSelectedColor = false)
         {
-            Success = success;
+            //Success = success;
             PlayerActions = playerActions;
             Card = card;
             PlayerActions = new Queue<PlayerAction>();

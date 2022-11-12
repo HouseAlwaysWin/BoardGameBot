@@ -21,6 +21,8 @@ namespace UnoGame.Extensions
             { CardType.WildDrawFour, "+4萬用卡" },
         };
 
+        
+
         public static Dictionary<CardColor, string> CardColorsMapper = new Dictionary<CardColor, string>()
         {
             { CardColor.Red, "紅色" },
@@ -37,10 +39,6 @@ namespace UnoGame.Extensions
             { 4,CardColor.Yellow  }
         };
 
-        //public static List<CallBackMapper> CallBackMappers = new List<CallBackMapper>
-        //{
-        //    new CallBackMapper{}
-        //};
 
         public static IMapper CreateMap()
         {

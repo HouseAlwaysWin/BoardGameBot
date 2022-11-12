@@ -22,6 +22,7 @@ namespace CommonGameLib.Extensions
     {
         private static Random rng = new Random();
 
+
         public static T CloneObj<T>(this object obj)
         {
             var serializeObj = JsonConvert.SerializeObject(obj);

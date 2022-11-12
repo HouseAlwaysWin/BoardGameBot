@@ -84,11 +84,11 @@ namespace UnoGame
 
         public async Task<ResponseInfo> NewGameAsync(string groupId, Player host, List<Card> baseCards)
         {
-            var response = new ResponseInfo();
+            var res = new ResponseInfo();
             if (string.IsNullOrEmpty(groupId))
             {
-                response.AddPlayerAction("請先把機器人加入到群組");
-                return response;
+                res.AddPlayerAction("請先把機器人加入到群組");
+                return res;
             }
 
             Stack<Card> totalCards = new Stack<Card>();
@@ -104,15 +104,15 @@ namespace UnoGame
                         card.CardType == CardType.Skip ||
                         card.CardType == CardType.DrawTwo)
                 {
-                    totalCards.Push(card);
-                    totalCards.Push(card);
+                    totalCards.Push(card.CloneNewCard());
+                    totalCards.Push(card.CloneNewCard());
                 }
                 else
                 {
-                    totalCards.Push(card);
-                    totalCards.Push(card);
-                    totalCards.Push(card);
-                    totalCards.Push(card);
+                    totalCards.Push(card.CloneNewCard());
+                    totalCards.Push(card.CloneNewCard());
+                    totalCards.Push(card.CloneNewCard());
+                    totalCards.Push(card.CloneNewCard());
                 }
             }
 
@@ -146,20 +146,16 @@ namespace UnoGame
                 currentGroup.Players.Enqueue(host);
                 gameGrouops.Add(groupId, currentGroup);
 
-                var saveToCached = await SaveGameGroupsAsync(gameGrouops);
-                if (!saveToCached)
-                {
-                    response.AddPlayerAction(@$"儲存GameGroups發生錯誤");
-                    return response;
-                }
+                await SaveGameGroupsAsync(gameGrouops, res);
+
             }
             else
             {
-                response.AddPlayerAction(@$"已開局，開局者：@{host.Username}");
-                return response;
+                res.AddPlayerAction(@$"已開局，開局者：@{host.Username}");
+                return res;
             }
-            response.AddPlayerAction(@$"開始新遊戲，開局者：@{host.Username}");
-            return response;
+            res.AddPlayerAction(@$"開始新遊戲，開局者：@{host.Username}");
+            return res;
         }
 
         public async Task<ResponseInfo> JoinBotPlayerAsync(string groupId, int number)
@@ -168,6 +164,12 @@ namespace UnoGame
             var gameGroup = await GetGameGroupAsync(groupId);
             if (gameGroup != null)
             {
+                if (gameGroup.IsGameStart)
+                {
+                    res.AddPlayerAction("遊戲已經在進行中，無法加入新玩家...");
+                    return res;
+                }
+
                 Player newBotPlayer = new Player
                 {
                     Index = gameGroup.Players.Count,
@@ -180,22 +182,18 @@ namespace UnoGame
                 if (currentGroup != null)
                 {
                     currentGroup.Players.Enqueue(newBotPlayer);
-                    var saveToCached = await SaveGameGroupAsync(currentGroup);
+                    var saveToCached = await SaveGameGroupAsync(currentGroup, res);
                     if (!saveToCached)
                     {
-                        res.AddPlayerAction(@$"儲存GameGroup發生錯誤");
-                        res.Success = false;
                         return res;
                     }
 
                     res.AddPlayerAction($@"已加入電腦玩家:{newBotPlayer.Username}");
-                    res.Success = true;
                     return res;
                 }
             }
-
-            res.Success = false;
             res.AddPlayerAction("遊戲尚未開局，請先執行開局指令 /new");
+
             return res;
         }
 
@@ -203,25 +201,28 @@ namespace UnoGame
         {
             var res = new ResponseInfo();
 
-            var currentGroup = await GetGameGroupAsync(groupId);
-            if (currentGroup != null)
+            var gameGroup = await GetGameGroupAsync(groupId);
+            if (gameGroup != null)
             {
-                player.Index = currentGroup.Players.Count;
-                if (currentGroup.Players.Any(p => p.Id == player.Id))
+                if (gameGroup.IsGameStart)
                 {
-                    res.Success = false;
+                    res.AddPlayerAction("遊戲已經在進行中，無法加入新玩家...");
+                    return res;
+                }
+
+                player.Index = gameGroup.Players.Count;
+                if (gameGroup.Players.Any(p => p.Id == player.Id))
+                {
                     res.AddPlayerAction(@$"玩家 @{player.Username} 已經加入遊戲了");
                     return res;
                 }
 
 
-                currentGroup.Players.Enqueue(player);
+                gameGroup.Players.Enqueue(player);
 
-                var saveToCached = await SaveGameGroupAsync(currentGroup);
+                var saveToCached = await SaveGameGroupAsync(gameGroup, res);
                 if (!saveToCached)
                 {
-                    res.AddPlayerAction(@$"儲存GameGroup發生錯誤");
-                    res.Success = false;
                     return res;
                 }
 
@@ -230,7 +231,6 @@ namespace UnoGame
                 return res;
             }
 
-            res.Success = false;
             res.AddPlayerAction("遊戲尚未開局，請先執行開局指令 /new");
             return res;
         }
@@ -239,13 +239,11 @@ namespace UnoGame
         {
             gameGroup.Discards.Push(throwCard);
             currentPlayer.RemoveHandCards(throwCard);
-            //currentPlayer.NextCard = throwCard;
 
             gameGroup.Players.Dequeue();
             gameGroup.Players.Enqueue(currentPlayer);
 
             var nextPlayer = gameGroup.Players.Peek();
-            //nextPlayer.PrevCard = throwCard;
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
             res.AddPlayerAction("", throwCard.FileId, currentPlayer?.Username, throwCard);
@@ -257,7 +255,6 @@ namespace UnoGame
         {
             gameGroup.Discards.Push(throwCard);
             currentPlayer.RemoveHandCards(throwCard);
-            //currentPlayer.NextCard = throwCard;
 
             gameGroup.Players.Dequeue();
             gameGroup.Players.Enqueue(currentPlayer);
@@ -266,7 +263,6 @@ namespace UnoGame
             gameGroup.Players.Enqueue(skipNextPlayer);
 
             var nextPlayer = gameGroup.Players.Peek();
-            //nextPlayer.PrevCard = throwCard;
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
             res.AddPlayerAction("", throwCard.FileId);
@@ -279,13 +275,11 @@ namespace UnoGame
         {
             gameGroup.Discards.Push(throwCard);
             currentPlayer.RemoveHandCards(throwCard);
-            //currentPlayer.NextCard = throwCard;
 
             gameGroup.Players.Dequeue();
             gameGroup.Players.Enqueue(currentPlayer);
 
             var skipNextPlayer = gameGroup.Players.Dequeue();
-            //skipNextPlayer.PrevCard = throwCard;
             for (int i = 0; i < 2; i++)
             {
                 var card = gameGroup.Cards.Pop();
@@ -294,7 +288,6 @@ namespace UnoGame
             gameGroup.Players.Enqueue(skipNextPlayer);
 
             var nextPlayer = gameGroup.Players.Peek();
-            //nextPlayer.PrevCard = throwCard;
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
             res.AddPlayerAction("", throwCard.FileId);
@@ -311,12 +304,10 @@ namespace UnoGame
             {
                 currentPlayer.RemoveHandCards(throwCard);
             }
-            //currentPlayer.NextCard = throwCard;
 
             gameGroup.Players = new Queue<Player>(gameGroup.Players.Reverse());
 
             var nextPlayer = gameGroup.Players.Peek();
-            //nextPlayer.PrevCard = throwCard;
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
             res.AddPlayerAction("", throwCard.FileId);
@@ -327,19 +318,16 @@ namespace UnoGame
 
         public void CardWildAction(GameGroup gameGroup, Card? throwCard, Player currentPlayer, ResponseInfo res, CardColor cardColor)
         {
-            //var copyCard = throwCard.CloneObj<Card>();
 
             gameGroup.Discards.Push(throwCard);
             currentPlayer.RemoveHandCards(throwCard);
-            //currentPlayer.NextCard = throwCard;
 
             gameGroup.Players.Dequeue();
             gameGroup.Players.Enqueue(currentPlayer);
 
             var nextPlayer = gameGroup.Players.Peek();
             throwCard.Color = cardColor;
-            //nextPlayer.PrevCard = throwCard;
-            var colorStr = throwCard.Color.HasValue ? TGMapper.CardColorsMapper[throwCard.Color.Value] : "";
+            var colorStr = throwCard.Color.GetCardColorName();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
             res.AddPlayerAction("", throwCard.FileId);
@@ -350,17 +338,14 @@ namespace UnoGame
 
         public void CardWildDrawFourAction(GameGroup gameGroup, Card? throwCard, Player currentPlayer, ResponseInfo res, CardColor color)
         {
-            //var copyCard = throwCard.CloneObj<Card>();
 
             gameGroup.Discards.Push(throwCard);
             currentPlayer.RemoveHandCards(throwCard);
-            //currentPlayer.NextCard = throwCard;
 
             gameGroup.Players.Dequeue();
             gameGroup.Players.Enqueue(currentPlayer);
 
             var skipNextPlayer = gameGroup.Players.Dequeue();
-            //skipNextPlayer.PrevCard = throwCard;
             for (int i = 0; i < 4; i++)
             {
                 var card = gameGroup.Cards.Pop();
@@ -370,12 +355,11 @@ namespace UnoGame
 
             var nextPlayer = gameGroup.Players.Peek();
             throwCard.Color = color;
-            //nextPlayer.PrevCard = throwCard;
-            var colorStr = throwCard.Color.HasValue ? TGMapper.CardColorsMapper[throwCard.Color.Value] : "";
+            var colorName = throwCard.Color.GetCardColorName();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
             res.AddPlayerAction("", throwCard.FileId);
-            res.AddPlayerAction($@"顏色選擇{colorStr}，玩家 @{skipNextPlayer.Username} 抽四張牌並跳過，輪到玩家 @{nextPlayer.Username}");
+            res.AddPlayerAction($@"顏色選擇{colorName}，玩家 @{skipNextPlayer.Username} 抽四張牌並跳過，輪到玩家 @{nextPlayer.Username}");
             gameGroup.CardOnBoard = throwCard;
         }
 
@@ -392,6 +376,47 @@ namespace UnoGame
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} Pass，輪到玩家 @{nextPlayer.Username}");
 
         }
+
+
+        private async Task CheckPlayerIsWinOrUnoAsync(string groupId, Player player, ResponseInfo res)
+        {
+            var playerHandCardCount = player.HandCards.Count;
+            if (playerHandCardCount == 1)
+            {
+                res.AddPlayerAction($@"玩家 @{player.Username} UNO !!!");
+            }
+            else if (playerHandCardCount == 0)
+            {
+                res.AddPlayerAction($@"玩家 @{player.Username} 獲勝 !!!");
+                var gameGroups = await GetOrInitGameGrouopsAsync();
+                if (gameGroups != null)
+                {
+                    if (gameGroups.ContainsKey(groupId))
+                    {
+                        gameGroups.Remove(groupId);
+                        await SaveGameGroupsAsync(gameGroups, res);
+                    }
+                }
+                res.AddPlayerAction("遊戲結束");
+            }
+        }
+
+        private void CheckCardNeedShuffle(GameGroup gameGroup)
+        {
+            if (gameGroup != null)
+            {
+                var totalCardCount = gameGroup.Cards.Count;
+                if (totalCardCount == 0)
+                {
+                    for (int i = 0; i < gameGroup.Discards.Count; i++)
+                    {
+                        gameGroup.Cards.Push(gameGroup.Discards.Pop());
+                    }
+                    gameGroup.Cards = gameGroup.Cards.Shuffle();
+                }
+            }
+        }
+
 
 
         public async Task<ResponseInfo> HandlePlayerAction(string playerId, string uniqueFiledId, CardColor? color = null, bool isPass = false)
@@ -466,43 +491,41 @@ namespace UnoGame
                 }
                 else
                 {
-                    var currentColor = string.Empty;
-                    if (cardOnBoard.Color.HasValue)
-                    {
-                        currentColor = TGMapper.CardColorsMapper[cardOnBoard.Color.Value];
-                    }
-                    res.AddPlayerAction(@$"不能出這張牌，必須與目前牌的顏色[{currentColor}]或數字相符的");
+
+                    var currentColorName = cardOnBoard.Color.GetCardColorName();
+                    res.AddPlayerAction(@$"不能出這張牌，必須與目前牌的顏色[{currentColorName}]或數字相符的");
                 }
 
-                var playerHandCardCount = player.HandCards.Count;
-                if (playerHandCardCount == 1)
-                {
-                    res.AddPlayerAction($@"玩家 @{player.Username} UNO !!!");
-                }
-                else if (playerHandCardCount == 1)
-                {
-                    res.AddPlayerAction($@"玩家 @{player.Username} 獲勝 !!!");
-                }
             }
 
-            if (gameGroup != null)
-            {
-                var totalCardCount = gameGroup.Cards.Count;
-                if (totalCardCount == 0)
-                {
-                    for (int i = 0; i < gameGroup.Discards.Count; i++)
-                    {
-                        gameGroup.Cards.Push(gameGroup.Discards.Pop());
-                    }
-                    gameGroup.Cards = gameGroup.Cards.Shuffle();
-                }
-            }
+            await CheckPlayerIsWinOrUnoAsync(gameGroup.GroupId, player, res);
+            CheckCardNeedShuffle(gameGroup);
+            //var playerHandCardCount = player.HandCards.Count;
+            //if (playerHandCardCount == 1)
+            //{
+            //    res.AddPlayerAction($@"玩家 @{player.Username} UNO !!!");
+            //}
+            //else if (playerHandCardCount == 1)
+            //{
+            //    res.AddPlayerAction($@"玩家 @{player.Username} 獲勝 !!!");
+            //}
 
-            var saveToCached = await SaveGameGroupAsync(gameGroup);
-            if (!saveToCached)
-            {
-                res.AddPlayerAction(@$"儲存GameGroups發生錯誤");
-            }
+
+            //if (gameGroup != null)
+            //{
+            //    var totalCardCount = gameGroup.Cards.Count;
+            //    if (totalCardCount == 0)
+            //    {
+            //        for (int i = 0; i < gameGroup.Discards.Count; i++)
+            //        {
+            //            gameGroup.Cards.Push(gameGroup.Discards.Pop());
+            //        }
+            //        gameGroup.Cards = gameGroup.Cards.Shuffle();
+            //    }
+            //}
+
+            await SaveGameGroupAsync(gameGroup, res);
+
 
             return res;
         }
@@ -566,83 +589,50 @@ namespace UnoGame
                     CardPassAction(gameGroup, currentPlayerQueue, res);
                 }
 
-                var currentPlayer = gameGroup.Players.FirstOrDefault(p => p.Id == currentPlayerQueue.Id);
-                //if (currentPlayer != null)
-                //{
-                //    currentPlayer.HandCards = currentPlayerQueue.HandCards;
-                //    currentPlayer.PrevCard = currentPlayerQueue.PrevCard;
-                //    currentPlayer.NextCard = currentPlayerQueue.NextCard;
-                //}
+                var player = gameGroup.Players.FirstOrDefault(p => p.Id == currentPlayerQueue.Id);
 
-                var playerHandCardCount = currentPlayer.HandCards.Count;
-                if (playerHandCardCount == 1)
-                {
-                    res.AddPlayerAction($@"玩家 @{currentPlayer.Username} UNO !!!");
-                }
-                else if (playerHandCardCount == 1)
-                {
-                    res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 獲勝 !!!");
-                }
-
-                var totalCardCount = gameGroup.Cards.Count;
-                if (totalCardCount == 0)
-                {
-                    for (int i = 0; i < gameGroup.Discards.Count; i++)
-                    {
-                        gameGroup.Cards.Push(gameGroup.Discards.Pop());
-                    }
-                    gameGroup.Cards = gameGroup.Cards.Shuffle();
-                }
+                await CheckPlayerIsWinOrUnoAsync(gameGroup.GroupId, player, res);
+                CheckCardNeedShuffle(gameGroup);
             }
 
-            var saveToCached = await SaveGameGroupAsync(gameGroup);
-            if (!saveToCached)
-            {
-                res.AddPlayerAction(@$"儲存GameGroups發生錯誤");
-            }
-
+            await SaveGameGroupAsync(gameGroup, res);
         }
 
         public async Task<ResponseInfo> StartGameAsync(string groupId, Player player)
         {
             var res = new ResponseInfo();
-            res.Success = true;
             var gameGroup = await GetGameGroupAsync(groupId);
             if (gameGroup == null)
             {
-                res.Success = false;
                 res.AddPlayerAction("遊戲尚未開局，請先執行開局指令 /new");
                 return res;
             }
 
             if (player.Id != gameGroup.Host.Id)
             {
-                res.Success = false;
                 res.AddPlayerAction($@"必須由開局者 @{gameGroup.Host.Username}開始遊戲");
                 return res;
             }
 
             if (gameGroup.Players.Count < 2)
             {
-                res.Success = false;
                 res.AddPlayerAction($@"遊戲人數不夠，至少要兩人");
                 return res;
             }
 
-            if (gameGroup.IsStart)
+            if (gameGroup.IsGameStart)
             {
-                res.Success = false;
                 res.AddPlayerAction($@"遊戲已經開始");
                 return res;
             }
 
 
             gameGroup.Cards = gameGroup.Cards.Shuffle();
-            gameGroup.IsStart = true;
+            gameGroup.IsGameStart = true;
 
             foreach (var p in gameGroup.Players.ToList())
             {
-                for (int i = 0; i < 7; i++)
+                for (int i = 0; i < 1; i++)
                 {
                     p.HandCards.Add(gameGroup.Cards.Pop());
                 }
@@ -682,17 +672,11 @@ namespace UnoGame
 
             StringBuilder botMsgBuilder = new StringBuilder();
             var firstPlayer = gameGroup.Players.Peek();
-            //firstPlayer.PrevCard = firstCard;
 
             await HandleBotActionAsync(gameGroup, res);
 
-            var saveToCached = await SaveGameGroupAsync(gameGroup);
-            if (!saveToCached)
-            {
-                res.AddPlayerAction(@$"儲存GameGroups發生錯誤");
-                //res.Message = @$"儲存GameGroups發生錯誤";
-                return res;
-            }
+            await SaveGameGroupAsync(gameGroup, res);
+
 
             return res;
         }
@@ -704,7 +688,6 @@ namespace UnoGame
             {
                 if (gameGroup.Host.Id != player.Id)
                 {
-                    res.Success = false;
                     res.AddPlayerAction($@"強制結束遊戲必須由開局者 @{player.Username} 操作");
                     return res;
                 }
@@ -716,16 +699,13 @@ namespace UnoGame
                 if (gameGroups.ContainsKey(groupId))
                 {
                     gameGroups.Remove(groupId);
-                    var saveToCached = await SaveGameGroupsAsync(gameGroups);
+                    var saveToCached = await SaveGameGroupsAsync(gameGroups, res);
                     if (!saveToCached)
                     {
-                        res.AddPlayerAction(@$"儲存GameGroup發生錯誤");
-                        res.Success = false;
                         return res;
                     }
                 }
             }
-            res.Success = true;
             res.AddPlayerAction("遊戲結束");
 
             return res;
@@ -767,25 +747,10 @@ namespace UnoGame
                     string type = string.Empty;
                     if (gameGroup.CardOnBoard != null)
                     {
-                        if (gameGroup.CardOnBoard.CardType == CardType.Number)
-                        {
-                            type = TGMapper.CardTypesMapper.ContainsKey(gameGroup.CardOnBoard.CardType) ?
-                                                        $"{TGMapper.CardTypesMapper[gameGroup.CardOnBoard.CardType]}{gameGroup.CardOnBoard.Number}" : string.Empty;
-                        }
-                        else
-                        {
-                            type = TGMapper.CardTypesMapper.ContainsKey(gameGroup.CardOnBoard.CardType) ?
-                                TGMapper.CardTypesMapper[gameGroup.CardOnBoard.CardType] : string.Empty;
-                        }
+                        string colorName = gameGroup.CardOnBoard.Color.GetCardColorName();
+                        string typeName = gameGroup.CardOnBoard.CardType.GetCardTypeName();
 
-                        string color = string.Empty;
-                        if (gameGroup.CardOnBoard.Color.HasValue)
-                        {
-                            color = TGMapper.CardColorsMapper.ContainsKey(gameGroup.CardOnBoard.Color.Value) ?
-                               TGMapper.CardColorsMapper[gameGroup.CardOnBoard.Color.Value] : string.Empty;
-                        }
-
-                        string cardName = $"{color}{type}";
+                        string cardName = $"{colorName}{typeName}";
                         gameStateBuilder.AppendLine($@"目前場上的牌：{cardName}");
                     }
                     gameStateBuilder.AppendLine();
@@ -813,12 +778,17 @@ namespace UnoGame
                 gameStateBuilder.AppendLine();
                 gameStateBuilder.AppendLine($@"棄牌數：{gameGroup.Discards.Count} 張");
             }
-            res.Success = true;
-            //res.Message = gameStateBuilder.ToString();
             res.AddPlayerAction(gameStateBuilder.ToString());
             return res;
         }
-        public async Task<bool> SaveGameGroupAsync(GameGroup gameGroup)
+
+        /// <summary>
+        /// Save GameGroup to cached
+        /// </summary>
+        /// <param name="gameGroup"></param>
+        /// <param name="res"></param>
+        /// <returns></returns>
+        public async Task<bool> SaveGameGroupAsync(GameGroup gameGroup, ResponseInfo res)
         {
             try
             {
@@ -829,6 +799,7 @@ namespace UnoGame
 
                     return await _cachedService.SetAsync(GameGroupsKey, gameGroups);
                 }
+                res.AddPlayerAction(@$"儲存GameGroups發生錯誤");
                 return false;
             }
             catch (Exception ex)
@@ -838,11 +809,17 @@ namespace UnoGame
             }
         }
 
-        private async Task<bool> SaveGameGroupsAsync(Dictionary<string, GameGroup> gameGroups)
+        private async Task<bool> SaveGameGroupsAsync(Dictionary<string, GameGroup> gameGroups, ResponseInfo res)
         {
             try
             {
-                return await _cachedService.SetAsync(GameGroupsKey, gameGroups);
+                var result = await _cachedService.SetAsync(GameGroupsKey, gameGroups);
+                if (!result)
+                {
+                    res.AddPlayerAction(@$"儲存GameGroup發生錯誤");
+                    return false;
+                }
+                return true;
             }
             catch (Exception ex)
             {
