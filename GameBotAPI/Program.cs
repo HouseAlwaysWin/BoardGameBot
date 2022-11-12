@@ -10,6 +10,9 @@ using CommonGameLib.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+var url = $"http://0.0.0.0:{port}";
+
 // Add services to the container.
 //builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 //    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
