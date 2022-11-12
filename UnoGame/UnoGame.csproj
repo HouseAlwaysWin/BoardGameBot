@@ -7,166 +7,166 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Source\Images\blue0.png">
+    <Content Include="Source\UnoGame\Images\blue0.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\blue1.png">
+    <Content Include="Source\UnoGame\Images\blue1.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\blue2.png">
+    <Content Include="Source\UnoGame\Images\blue2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\blue3.png">
+    <Content Include="Source\UnoGame\Images\blue3.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\blue4.png">
+    <Content Include="Source\UnoGame\Images\blue4.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\blue5.png">
+    <Content Include="Source\UnoGame\Images\blue5.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\blue6.png">
+    <Content Include="Source\UnoGame\Images\blue6.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\blue7.png">
+    <Content Include="Source\UnoGame\Images\blue7.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\blue8.png">
+    <Content Include="Source\UnoGame\Images\blue8.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\blue9.png">
+    <Content Include="Source\UnoGame\Images\blue9.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\blueDrawTwo.png">
+    <Content Include="Source\UnoGame\Images\blueDrawTwo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\blueReverse.png">
+    <Content Include="Source\UnoGame\Images\blueReverse.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\blueSkip.png">
+    <Content Include="Source\UnoGame\Images\blueSkip.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\green0.png">
+    <Content Include="Source\UnoGame\Images\green0.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\green1.png">
+    <Content Include="Source\UnoGame\Images\green1.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\green2.png">
+    <Content Include="Source\UnoGame\Images\green2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\green3.png">
+    <Content Include="Source\UnoGame\Images\green3.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\green4.png">
+    <Content Include="Source\UnoGame\Images\green4.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\green5.png">
+    <Content Include="Source\UnoGame\Images\green5.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\green6.png">
+    <Content Include="Source\UnoGame\Images\green6.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\green7.png">
+    <Content Include="Source\UnoGame\Images\green7.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\green8.png">
+    <Content Include="Source\UnoGame\Images\green8.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\green9.png">
+    <Content Include="Source\UnoGame\Images\green9.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\greenDrawTwo.png">
+    <Content Include="Source\UnoGame\Images\greenDrawTwo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\greenReverse.png">
+    <Content Include="Source\UnoGame\Images\greenReverse.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\greenSkip.png">
+    <Content Include="Source\UnoGame\Images\greenSkip.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\red0.png">
+    <Content Include="Source\UnoGame\Images\red0.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\red1.png">
+    <Content Include="Source\UnoGame\Images\red1.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\red2.png">
+    <Content Include="Source\UnoGame\Images\red2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\red3.png">
+    <Content Include="Source\UnoGame\Images\red3.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\red4.png">
+    <Content Include="Source\UnoGame\Images\red4.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\red5.png">
+    <Content Include="Source\UnoGame\Images\red5.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\red6.png">
+    <Content Include="Source\UnoGame\Images\red6.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\red7.png">
+    <Content Include="Source\UnoGame\Images\red7.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\red8.png">
+    <Content Include="Source\UnoGame\Images\red8.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\red9.png">
+    <Content Include="Source\UnoGame\Images\red9.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\redDrawTwo.png">
+    <Content Include="Source\UnoGame\Images\redDrawTwo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\redReverse.png">
+    <Content Include="Source\UnoGame\Images\redReverse.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\redSkip.png">
+    <Content Include="Source\UnoGame\Images\redSkip.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\wild.png">
+    <Content Include="Source\UnoGame\Images\wild.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\wildDrawFour.png">
+    <Content Include="Source\UnoGame\Images\wildDrawFour.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellow0.png">
+    <Content Include="Source\UnoGame\Images\yellow0.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellow1.png">
+    <Content Include="Source\UnoGame\Images\yellow1.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellow2.png">
+    <Content Include="Source\UnoGame\Images\yellow2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellow3.png">
+    <Content Include="Source\UnoGame\Images\yellow3.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellow4.png">
+    <Content Include="Source\UnoGame\Images\yellow4.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellow5.png">
+    <Content Include="Source\UnoGame\Images\yellow5.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellow6.png">
+    <Content Include="Source\UnoGame\Images\yellow6.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellow7.png">
+    <Content Include="Source\UnoGame\Images\yellow7.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellow8.png">
+    <Content Include="Source\UnoGame\Images\yellow8.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellow9.png">
+    <Content Include="Source\UnoGame\Images\yellow9.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellowDrawTwo.png">
+    <Content Include="Source\UnoGame\Images\yellowDrawTwo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellowReverse.png">
+    <Content Include="Source\UnoGame\Images\yellowReverse.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Images\yellowSkip.png">
+    <Content Include="Source\UnoGame\Images\yellowSkip.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -186,166 +186,166 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Source\Images\unocards\blue0.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blue0.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\blue1.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blue1.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\blue2.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blue2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\blue3.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blue3.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\blue4.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blue4.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\blue5.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blue5.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\blue6.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blue6.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\blue7.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blue7.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\blue8.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blue8.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\blue9.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blue9.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\blueDrawTwo.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blueDrawTwo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\blueReverse.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blueReverse.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\blueSkip.png">
+    <Resource Include="Source\UnoGame\Images\unocards\blueSkip.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\green0.png">
+    <Resource Include="Source\UnoGame\Images\unocards\green0.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\green1.png">
+    <Resource Include="Source\UnoGame\Images\unocards\green1.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\green2.png">
+    <Resource Include="Source\UnoGame\Images\unocards\green2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\green3.png">
+    <Resource Include="Source\UnoGame\Images\unocards\green3.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\green4.png">
+    <Resource Include="Source\UnoGame\Images\unocards\green4.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\green5.png">
+    <Resource Include="Source\UnoGame\Images\unocards\green5.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\green6.png">
+    <Resource Include="Source\UnoGame\Images\unocards\green6.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\green7.png">
+    <Resource Include="Source\UnoGame\Images\unocards\green7.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\green8.png">
+    <Resource Include="Source\UnoGame\Images\unocards\green8.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\green9.png">
+    <Resource Include="Source\UnoGame\Images\unocards\green9.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\greenDrawTwo.png">
+    <Resource Include="Source\UnoGame\Images\unocards\greenDrawTwo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\greenReverse.png">
+    <Resource Include="Source\UnoGame\Images\unocards\greenReverse.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\greenSkip.png">
+    <Resource Include="Source\UnoGame\Images\unocards\greenSkip.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\red0.png">
+    <Resource Include="Source\UnoGame\Images\unocards\red0.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\red1.png">
+    <Resource Include="Source\UnoGame\Images\unocards\red1.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\red2.png">
+    <Resource Include="Source\UnoGame\Images\unocards\red2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\red3.png">
+    <Resource Include="Source\UnoGame\Images\unocards\red3.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\red4.png">
+    <Resource Include="Source\UnoGame\Images\unocards\red4.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\red5.png">
+    <Resource Include="Source\UnoGame\Images\unocards\red5.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\red6.png">
+    <Resource Include="Source\UnoGame\Images\unocards\red6.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\red7.png">
+    <Resource Include="Source\UnoGame\Images\unocards\red7.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\red8.png">
+    <Resource Include="Source\UnoGame\Images\unocards\red8.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\red9.png">
+    <Resource Include="Source\UnoGame\Images\unocards\red9.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\redDrawTwo.png">
+    <Resource Include="Source\UnoGame\Images\unocards\redDrawTwo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\redReverse.png">
+    <Resource Include="Source\UnoGame\Images\unocards\redReverse.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\redSkip.png">
+    <Resource Include="Source\UnoGame\Images\unocards\redSkip.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\wild.png">
+    <Resource Include="Source\UnoGame\Images\unocards\wild.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\wildDrawFour.png">
+    <Resource Include="Source\UnoGame\Images\unocards\wildDrawFour.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellow0.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellow0.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellow1.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellow1.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellow2.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellow2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellow3.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellow3.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellow4.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellow4.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellow5.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellow5.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellow6.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellow6.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellow7.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellow7.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellow8.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellow8.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellow9.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellow9.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellowDrawTwo.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellowDrawTwo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellowReverse.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellowReverse.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Source\Images\unocards\yellowSkip.png">
+    <Resource Include="Source\UnoGame\Images\unocards\yellowSkip.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

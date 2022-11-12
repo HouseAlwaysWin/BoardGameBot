@@ -2,14 +2,8 @@
 using CommonGameLib.Services;
 using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -19,18 +13,9 @@ using Telegram.Bot.Types.ReplyMarkups;
 using UnoGame.Extensions;
 using UnoGame.GameComponents;
 using UnoGame.Telegram.Models;
-using TGFile = Telegram.Bot.Types.File;
 using IOFile = System.IO.File;
 using SixLabors.ImageSharp.Processing;
-using Microsoft.AspNetCore.Http.Connections;
-using AutoMapper.Execution;
-using System.Drawing;
-using System.IO;
 using System.Globalization;
-using System.Xml.Linq;
-using Telegram.Bot.Requests;
-using Newtonsoft.Json;
-using static System.Collections.Specialized.BitVector32;
 
 namespace UnoGame.Telegram
 {
@@ -43,8 +28,7 @@ namespace UnoGame.Telegram
         private IMapper _mapper;
         private Dictionary<string, BotCommandInfo> _commands;
 
-        private string SelectedColorKey = "SelectedColor";
-        private string ImgSourceRootPath = @"Source/Images";
+        private string ImgSourceRootPath = @"Source/UnoGame/Images";
 
         public delegate Card GetCard(string id, string uniqueFiledId, string fileId, string name, int number, string imageUrl, CardColor? color);
 
@@ -90,10 +74,12 @@ namespace UnoGame.Telegram
                 new(@$"new", "開始新局", async m => await NewGameAsync(m)),
                 new(@$"start", "開始遊戲", async m => await StartGameAsync(m)),
                 new(@$"pass", "跳過這局", async m => await PassGameAsync(m)),
+                //to do new(@$"handcards", "顯示目前手牌", async m => await EndGameAsync(m)),
                 new(@$"gamestate", "顯示遊戲狀態", async m => await ShowGameStateAsync(m)),
                 new(@$"join", "加入遊戲", async m => await JoinPlayerAsync(m)),
                 new(@$"joinbot", "加入電腦玩家", async m => await JoinBotPlayerAsync(m)),
                 new(@$"end", "強制結束遊戲", async m => await EndGameAsync(m)),
+                //to do new(@$"settings", "遊戲設定", async m => await EndGameAsync(m)),
                 new(@$"test",  "test",async m => await TestAsync(m))
             };
             return botCommandInfos;
@@ -383,7 +369,7 @@ namespace UnoGame.Telegram
 
             var stickers = await GetCardStickersAsync(message);
             List<Card> baseCards = new List<Card>();
-            var sourceRootPath = @$"{AppContext.BaseDirectory}\Source\Images";
+            var sourceRootPath = @$"{AppContext.BaseDirectory}\{ImgSourceRootPath}";
             var filesPath = Directory.GetFiles(sourceRootPath);
             var fileInfos = new List<FileInfo>();
             foreach (var path in filesPath)

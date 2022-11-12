@@ -23,7 +23,9 @@ namespace GameBotAPI.Services
         {
             #region Setting Webhook
             using var scope = _services.CreateScope();
-            var botClient = scope.ServiceProvider.GetRequiredService<IUnoTGBotService>().BotClient;
+
+            var _botService = scope.ServiceProvider.GetRequiredService<IUnoTGBotService>();
+            var botClient = _botService.BotClient;
 
             // Configure custom endpoint per Telegram API recommendations:
             // https://core.telegram.org/bots/api#setwebhook
@@ -39,7 +41,6 @@ namespace GameBotAPI.Services
                 cancellationToken: cancellationToken);
             #endregion
 
-            var _botService = scope.ServiceProvider.GetRequiredService<IUnoTGBotService>();
             await _botService.InitCommands();
 
         }

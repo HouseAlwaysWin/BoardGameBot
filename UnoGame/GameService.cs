@@ -135,6 +135,8 @@ namespace UnoGame
                 if (gameGroup.IsGameStart)
                 {
                     res.AddPlayerAction(@$"遊戲進行中...");
+                    var player = gameGroup.Players.Peek();
+                    res.AddPlayerAction(@$"目前輪到玩家 @{player.Username}");
                 }
                 else
                 {
