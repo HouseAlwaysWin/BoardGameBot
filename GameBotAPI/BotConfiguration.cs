@@ -2,7 +2,7 @@
 {
     public class BotConfiguration
     {
-        public string BotToken { get; init; } = default!;
-        public string HostAddress { get; init; } = default!;
+        public string UnoTGBotToken { get; init; } = default!;
+        public string UnoTGBotHostAddress { get; init; } = default!;
     }
 }

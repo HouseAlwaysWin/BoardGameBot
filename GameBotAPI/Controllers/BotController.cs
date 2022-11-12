@@ -9,16 +9,16 @@ namespace GameBotAPI.Controllers
     [Route("[controller]/[action]")]
     public class BotController : ControllerBase
     {
-        private ITelegramBotService _telegramBotService;
-        public BotController(ITelegramBotService telegramBotService)
+        private IUnoTGBotService _unoTGBotService;
+        public BotController(IUnoTGBotService unoTGBotService)
         {
-            _telegramBotService = telegramBotService;
+            _unoTGBotService = unoTGBotService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> HandleTelegramRequest([FromBody] Update update)
+        public async Task<IActionResult> HandleUnoTGBot([FromBody] Update update)
         {
-            await _telegramBotService.EchoAsync(update);
+            await _unoTGBotService.HandleChat(update);
             return Ok();
         }
     }

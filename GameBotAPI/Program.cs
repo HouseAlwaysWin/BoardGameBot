@@ -19,12 +19,16 @@ builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 var botConfig = builder.Configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
-builder.Services.AddHostedService<TGBotConfigService>();
+builder.Services.AddHostedService<TGUnoBotConfigService>();
 
-builder.Services.AddHttpClient("BoardGameBot")
-       .AddTypedClient<ITelegramBotClient>(httpClient => new TelegramBotClient(botConfig.BotToken, httpClient));
+//builder.Services.AddHttpClient("BoardGameBot")
+//       .AddTypedClient<ITelegramBotClient>(httpClient => new TelegramBotClient(botConfig.UnoTGBotToken, httpClient));
 
-builder.Services.AddScoped<ITelegramBotService, TelegramBotService>();
+builder.Services.AddScoped<IUnoTGBotService>(x => new UnoTGBotService(
+    x.GetRequiredService<IGameService>(),
+    x.GetRequiredService<ICachedService>(),
+    x.GetRequiredService<ILogger<UnoTGBotService>>(),
+    botConfig.UnoTGBotToken)); ;
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddSingleton<ICachedService, CachedService>();

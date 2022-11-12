@@ -4,13 +4,13 @@ using UnoGame.Telegram;
 
 namespace GameBotAPI.Services
 {
-    public class TGBotConfigService : IHostedService
+    public class TGUnoBotConfigService : IHostedService
     {
-        private readonly ILogger<TGBotConfigService> _logger;
+        private readonly ILogger<TGUnoBotConfigService> _logger;
         private readonly IServiceProvider _services;
         private readonly BotConfiguration _botConfig;
 
-        public TGBotConfigService(ILogger<TGBotConfigService> logger,
+        public TGUnoBotConfigService(ILogger<TGUnoBotConfigService> logger,
                                 IServiceProvider serviceProvider,
                                 IConfiguration configuration)
         {
@@ -23,15 +23,15 @@ namespace GameBotAPI.Services
         {
             #region Setting Webhook
             using var scope = _services.CreateScope();
-            var botClient = scope.ServiceProvider.GetRequiredService<ITelegramBotClient>();
+            var botClient = scope.ServiceProvider.GetRequiredService<IUnoTGBotService>().BotClient;
 
             // Configure custom endpoint per Telegram API recommendations:
             // https://core.telegram.org/bots/api#setwebhook
             // If you'd like to make sure that the Webhook request comes from Telegram, we recommend
             // using a secret path in the URL, e.g. https://www.example.com/<token>.
             // Since nobody else knows your bot's token, you can be pretty sure it's us.
-            // var webhookAddress = @$"{_botConfig.HostAddress}/bot/{_botConfig.BotToken}";
-            var webhookAddress = @$"{_botConfig.HostAddress}";
+            // var webhookAddress = @$"{_botConfig.UnoTGBotHostAddress}/bot/{_botConfig.UnoTGBotToken}";
+            var webhookAddress = @$"{_botConfig.UnoTGBotHostAddress}";
             _logger.LogInformation("Setting webhook: {WebhookAddress}", webhookAddress);
             await botClient.SetWebhookAsync(
                 url: webhookAddress,
@@ -39,7 +39,7 @@ namespace GameBotAPI.Services
                 cancellationToken: cancellationToken);
             #endregion
 
-            var _botService = scope.ServiceProvider.GetRequiredService<ITelegramBotService>();
+            var _botService = scope.ServiceProvider.GetRequiredService<IUnoTGBotService>();
             await _botService.InitCommands();
 
         }
@@ -47,7 +47,7 @@ namespace GameBotAPI.Services
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             using var scope = _services.CreateScope();
-            var botClient = scope.ServiceProvider.GetRequiredService<ITelegramBotClient>();
+            var botClient = scope.ServiceProvider.GetRequiredService<IUnoTGBotService>().BotClient;
 
             // Remove webhook upon app shutdown
             _logger.LogInformation("Removing webhook");

@@ -34,10 +34,10 @@ using static System.Collections.Specialized.BitVector32;
 
 namespace UnoGame.Telegram
 {
-    public class TelegramBotService : ITelegramBotService
+    public class UnoTGBotService : IUnoTGBotService
     {
-        private readonly ILogger<TelegramBotService> _logger;
-        private readonly ITelegramBotClient _botClient;
+        private readonly ILogger<UnoTGBotService> _logger;
+        public ITelegramBotClient BotClient { get; set; }
         private readonly IGameService _gameService;
         private readonly ICachedService _cachedService;
         private IMapper _mapper;
@@ -48,14 +48,15 @@ namespace UnoGame.Telegram
 
         public delegate Card GetCard(string id, string uniqueFiledId, string fileId, string name, int number, string imageUrl, CardColor? color);
 
-        public TelegramBotService(
-            ITelegramBotClient botClient,
+        public UnoTGBotService(
+            //ITelegramBotClient botClient,
             IGameService gameService,
             ICachedService cachedService,
-            ILogger<TelegramBotService> logger)
+            ILogger<UnoTGBotService> logger,
+            string token)
         {
             _logger = logger;
-            _botClient = botClient;
+            BotClient = new TelegramBotClient(token);
             _gameService = gameService;
             _mapper = TGMapper.CreateMap();
             _commands = InitCommandsMapperAsync().Result;
@@ -64,7 +65,7 @@ namespace UnoGame.Telegram
 
         private async Task<Dictionary<string, BotCommandInfo>> InitCommandsMapperAsync()
         {
-            var botInfo = await _botClient.GetMeAsync();
+            var botInfo = await BotClient.GetMeAsync();
             var botName = $"{botInfo.Username}";
             var botCommandInfos = await GetBotCommandInfosAsync();
             Dictionary<string, BotCommandInfo> commands = new Dictionary<string, BotCommandInfo>();
@@ -79,7 +80,7 @@ namespace UnoGame.Telegram
         public async Task InitCommands()
         {
             var botCommandInfos = await GetBotCommandInfosAsync();
-            await _botClient.SetMyCommandsAsync(botCommandInfos);
+            await BotClient.SetMyCommandsAsync(botCommandInfos);
         }
 
         private async Task<List<BotCommandInfo>> GetBotCommandInfosAsync()
@@ -103,7 +104,7 @@ namespace UnoGame.Telegram
         public async Task TestAsync(Message message)
         {
             //await InitCardStickers(message);
-            //await _botClient.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
+            //await BotClient.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
 
             //// Simulate longer running task
             //await Task.Delay(500);
@@ -133,13 +134,13 @@ namespace UnoGame.Telegram
 
             //foreach (var card in player.HandCards)
             //{
-            //    var msg = await _botClient.SendStickerAsync(message.From.Id, card.FileId);
+            //    var msg = await BotClient.SendStickerAsync(message.From.Id, card.FileId);
 
-            //    await _botClient.DeleteMessageAsync(message.From.Id, msg.MessageId);
+            //    await BotClient.DeleteMessageAsync(message.From.Id, msg.MessageId);
             //}
 
 
-            //var msg = await _botClient.SendTextMessageAsync(chatId: message.From.Id,
+            //var msg = await BotClient.SendTextMessageAsync(chatId: message.From.Id,
             //                                       text: "Choose",
             //                                       replyMarkup: inlineKeyboard);
 
@@ -157,7 +158,7 @@ namespace UnoGame.Telegram
                 ResizeKeyboard = true
             };
 
-            await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+            await BotClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                  text: "Choose",
                                                  replyMarkup: replyKeyboardMarkup);
         }
@@ -168,7 +169,7 @@ namespace UnoGame.Telegram
         /// </summary>
         /// <param name="update"></param>
         /// <returns></returns>
-        public async Task EchoAsync(Update update)
+        public async Task HandleChat(Update update)
         {
             var handler = update.Type switch
             {
@@ -184,20 +185,20 @@ namespace UnoGame.Telegram
         public async Task<StickerSet> GetCardStickersAsync(Message message)
         {
 
-            var botInfo = await _botClient.GetMeAsync();
+            var botInfo = await BotClient.GetMeAsync();
             var stickerName = $"botUnoCard_by_{botInfo.Username}";
             StickerSet stickerSet = new StickerSet();
             try
             {
 
-                stickerSet = await _botClient.GetStickerSetAsync(name: stickerName);
+                stickerSet = await BotClient.GetStickerSetAsync(name: stickerName);
                 if (stickerSet.Stickers.Length != 54)
                 {
                     foreach (var item in stickerSet.Stickers)
                     {
-                        await _botClient.DeleteStickerFromSetAsync(item.FileId);
+                        await BotClient.DeleteStickerFromSetAsync(item.FileId);
                     }
-                    stickerSet = await _botClient.GetStickerSetAsync(name: stickerName);
+                    stickerSet = await BotClient.GetStickerSetAsync(name: stickerName);
                 }
 
                 await _cachedService.GetAndSetAsync(stickerName, stickerSet);
@@ -227,7 +228,7 @@ namespace UnoGame.Telegram
                     try
                     {
                         var fileInfo = new FileInfo(path);
-                        var file = await _botClient.UploadStickerFileAsync(
+                        var file = await BotClient.UploadStickerFileAsync(
                             userId: botInfo.Id,
                             pngSticker: new InputFileStream(ms));
                         tgFiles.Add(new ImageFileInfo()
@@ -247,7 +248,7 @@ namespace UnoGame.Telegram
             int firstEmojiUnicode = 0x1F601;
             var emojiString = char.ConvertFromUtf32(firstEmojiUnicode);
 
-            await _botClient.CreateNewStaticStickerSetAsync(
+            await BotClient.CreateNewStaticStickerSetAsync(
                 userId: message.From.Id,
                 name: stickerName,
                 title: "Uno遊戲卡牌",
@@ -258,13 +259,13 @@ namespace UnoGame.Telegram
             {
                 var tgFile = tgFiles[i];
                 emojiString = char.ConvertFromUtf32(firstEmojiUnicode + i);
-                await _botClient.AddStaticStickerToSetAsync(
+                await BotClient.AddStaticStickerToSetAsync(
                     userId: message.From.Id,
                     name: stickerName,
                     pngSticker: tgFile.TGFile.FileId,
                     emojis: emojiString);
             }
-            stickerSet = await _botClient.GetStickerSetAsync(stickerName);
+            stickerSet = await BotClient.GetStickerSetAsync(stickerName);
             return stickerSet;
         }
 
@@ -339,7 +340,7 @@ namespace UnoGame.Telegram
         {
             if (chatType != ChatType.Group)
             {
-                await _botClient.SendTextMessageAsync(
+                await BotClient.SendTextMessageAsync(
                 chatId: id,
                 text: "請先把機器人加入到群組");
                 return false;
@@ -351,7 +352,7 @@ namespace UnoGame.Telegram
         {
             if (players.Count == 10)
             {
-                await _botClient.SendTextMessageAsync(
+                await BotClient.SendTextMessageAsync(
                 chatId: id,
                 text: "已達最大玩家人數");
                 return false;
@@ -551,7 +552,7 @@ namespace UnoGame.Telegram
                     }
                     else
                     {
-                        await _botClient.SendTextMessageAsync(groupId, $@"現在輪到玩家是： @{currentPlayer.Username}");
+                        await BotClient.SendTextMessageAsync(groupId, $@"現在輪到玩家是： @{currentPlayer.Username}");
                     }
                 }
             }
@@ -566,7 +567,7 @@ namespace UnoGame.Telegram
                     await Task.Delay(1000);
                     if (!string.IsNullOrEmpty(action.Message))
                     {
-                        await _botClient.SendTextMessageAsync(
+                        await BotClient.SendTextMessageAsync(
                                  chatId: chatId,
                                  parseMode: ParseMode.Html,
                                  text: action.Message,
@@ -574,7 +575,7 @@ namespace UnoGame.Telegram
                     }
                     else if (!string.IsNullOrEmpty(action.FileId))
                     {
-                        await _botClient.SendStickerAsync(chatId, action.FileId);
+                        await BotClient.SendStickerAsync(chatId, action.FileId);
                     }
                 }
             }
@@ -602,7 +603,7 @@ namespace UnoGame.Telegram
                             var uniqueFiledId = callbackData[2];
 
                             // remove selected keyboard
-                            await _botClient.EditMessageReplyMarkupAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, null);
+                            await BotClient.EditMessageReplyMarkupAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, null);
                             var color = colorNumber.GetCallbackCardColor();
                             var res = await _gameService.HandlePlayerAction(playerId, uniqueFiledId, color);
                             gameGroup = await _gameService.GetGameGroupAsync(groupId);
@@ -639,7 +640,7 @@ namespace UnoGame.Telegram
                 }
             }
 
-            await _botClient.AnswerInlineQueryAsync(inlineQuery.Id, cards, 0, true);
+            await BotClient.AnswerInlineQueryAsync(inlineQuery.Id, cards, 0, true);
         }
 
         private async Task ChosenInlineResultAsync(ChosenInlineResult chosenInlineResult)
