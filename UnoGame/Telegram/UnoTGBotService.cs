@@ -16,6 +16,7 @@ using UnoGame.Telegram.Models;
 using IOFile = System.IO.File;
 using SixLabors.ImageSharp.Processing;
 using System.Globalization;
+using Telegram.Bot.Exceptions;
 
 namespace UnoGame.Telegram
 {
@@ -166,6 +167,29 @@ namespace UnoGame.Telegram
                 UpdateType.ChosenInlineResult => ChosenInlineResultAsync(update.ChosenInlineResult!),
                 _ => UnknownUpdateHandlerAsync(update)
             };
+
+            try
+            {
+                await handler;
+            }
+#pragma warning disable CA1031
+            catch (Exception exception)
+#pragma warning restore CA1031
+            {
+                await HandleErrorAsync(exception);
+            }
+        }
+
+        public Task HandleErrorAsync(Exception exception)
+        {
+            var ErrorMessage = exception switch
+            {
+                ApiRequestException apiRequestException => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
+                _ => exception.ToString()
+            };
+
+            _logger.LogInformation("HandleError: {ErrorMessage}", ErrorMessage);
+            return Task.CompletedTask;
         }
 
         public async Task<StickerSet> GetCardStickersAsync(Message message)
