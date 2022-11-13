@@ -34,7 +34,6 @@ namespace UnoGame.Telegram
         public delegate Card GetCard(string id, string uniqueFiledId, string fileId, string name, int number, string imageUrl, CardColor? color);
 
         public UnoTGBotService(
-            //ITelegramBotClient botClient,
             IGameService gameService,
             ICachedService cachedService,
             ILogger<UnoTGBotService> logger,

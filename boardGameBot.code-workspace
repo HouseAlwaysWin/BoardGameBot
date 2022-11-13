@@ -1,8 +1,20 @@
 {
     "folders": [
         {
-            "name": "TelegramGameBot",
-            "path": "./TelegramGameBot"
+            "name": "GameBotAPI",
+            "path": "./GameBotAPI"
+        },
+        {
+            "name": "CommonGameLib",
+            "path": "./CommonGameLib"
+        },
+        {
+            "name": "UnoGame",
+            "path": "./UnoGame"
+        },
+        {
+            "name": "WhoIsSpy",
+            "path": "./WhoISpy"
         },
     ]
 }
