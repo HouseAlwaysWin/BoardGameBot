@@ -11,13 +11,13 @@ namespace UnoGame.GameComponents
         public string Key { get; set; }
         public string Data { get; set; }
         public string UniqueFiledId { get; set; }
-        //public string FileId { get; set; }
+        //public string FileUniqueId { get; set; }
 
         public CallBackDataMapper(string key, string data,  string uniqueFiledId)
         {
             Key = key;
             Data = data;
-            //FileId = fileId;
+            //FileUniqueId = fileId;
             UniqueFiledId = uniqueFiledId;
         }
     }

@@ -2,8 +2,10 @@
 using CommonGameLib.Services;
 using Microsoft.Extensions.Logging;
 using System.Text;
+using Telegram.Bot;
 using UnoGame.Extensions;
 using UnoGame.GameComponents;
+using UnoGame.Telegram.Models;
 
 namespace UnoGame
 {
@@ -236,7 +238,7 @@ namespace UnoGame
             var nextPlayer = gameGroup.Players.Peek();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            res.AddPlayerAction("", throwCard.FileId, currentPlayer?.Username, throwCard);
+            res.AddPlayerAction("", currentPlayer?.Username, throwCard, throwCard.ImageFile);
 
             gameGroup.CardOnBoard = throwCard;
         }
@@ -255,7 +257,7 @@ namespace UnoGame
             var nextPlayer = gameGroup.Players.Peek();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            res.AddPlayerAction("", throwCard.FileId);
+            res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
             res.AddPlayerAction($@"跳過玩家 @{skipNextPlayer.Username}");
 
             gameGroup.CardOnBoard = throwCard;
@@ -281,7 +283,7 @@ namespace UnoGame
             var nextPlayer = gameGroup.Players.Peek();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            res.AddPlayerAction("", throwCard.FileId);
+            res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
             res.AddPlayerAction($@"玩家 @{skipNextPlayer.Username} 抽兩張牌並跳過");
 
 
@@ -303,7 +305,7 @@ namespace UnoGame
             var nextPlayer = gameGroup.Players.Peek();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            res.AddPlayerAction("", throwCard.FileId);
+            res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
             res.AddPlayerAction($@"反轉");
 
             gameGroup.CardOnBoard = throwCard;
@@ -324,7 +326,7 @@ namespace UnoGame
             var colorStr = throwCard.Color.Value.GetCardColorName();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            res.AddPlayerAction("", throwCard.FileId);
+            res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
             res.AddPlayerAction($@"顏色選擇{colorStr}");
 
             gameGroup.CardOnBoard = throwCard;
@@ -352,7 +354,7 @@ namespace UnoGame
             var colorName = throwCard.Color.Value.GetCardColorName();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            res.AddPlayerAction("", throwCard.FileId);
+            res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
             res.AddPlayerAction($@"顏色選擇{colorName}，玩家 @{skipNextPlayer.Username} 抽四張牌並跳過");
 
 
@@ -421,12 +423,12 @@ namespace UnoGame
 
 
 
-        public async Task<ResponseInfo> HandlePlayerAction(string playerId, string uniqueFiledId, CardColor? color = null, bool isPass = false)
+        public async Task<ResponseInfo> HandlePlayerAction(string playerId, ImageFileInfo imgFile, CardColor? color = null, bool isPass = false)
         {
             ResponseInfo res = new ResponseInfo();
 
             var gameGroup = await GetGameGrouopByUserAsync(playerId);
-            var playerSendCard = await GetPlayerCardAsync(uniqueFiledId, playerId);
+            var playerSendCard = await GetPlayerCardAsync(imgFile.FileUniqueId, playerId);
             var player = await GetPlayerAsync(playerId);
             if (isPass && player != null && gameGroup != null)
             {
@@ -646,7 +648,7 @@ namespace UnoGame
             msgBuilder.AppendLine();
             msgBuilder.AppendLine("開局牌為:");
             res.AddPlayerAction(msgBuilder.ToString());
-            res.AddPlayerAction(fileId: firstCard.FileId);
+            res.AddPlayerAction(imgFile: firstCard.ImageFile);
 
             StringBuilder botMsgBuilder = new StringBuilder();
             var firstPlayer = gameGroup.Players.Peek();
@@ -700,7 +702,7 @@ namespace UnoGame
             var player = await GetPlayerAsync(playerId);
             if (player != null)
             {
-                var card = player.HandCards.FirstOrDefault(c => c.UniqueFileId == uniqueFiledId);
+                var card = player.HandCards.FirstOrDefault(c => c.ImageFile.FileUniqueId == uniqueFiledId);
                 return card;
             }
             return null;

@@ -9,7 +9,7 @@ using UnoGame.GameComponents;
 namespace UnoGame.Telegram.Models
 {
 
-    public delegate Card GetCard(string id, string uniqueFiledId, string fileId, string name, int number, string imageUrl, CardType cardType, CardColor? color);
+    public delegate Card GetCard(string id, string name, int number, ImageFileInfo imgFile, CardType cardType, CardColor? color);
     public class CardTypeMapper
     {
         public string RegexPattern;

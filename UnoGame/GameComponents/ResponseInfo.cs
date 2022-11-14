@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot.Types.ReplyMarkups;
+using UnoGame.Telegram.Models;
 
 namespace UnoGame.GameComponents
 {
@@ -11,6 +12,7 @@ namespace UnoGame.GameComponents
     {
         public Queue<PlayerAction> PlayerActions { get; set; }
         public Card Card { get; set; }
+        public ImageFileInfo? ImgFile { get; set; }
 
         public bool NeedSelectedColor { get; set; }
 
@@ -23,9 +25,9 @@ namespace UnoGame.GameComponents
             NeedSelectedColor = needSelectedColor;
         }
 
-        public void AddPlayerAction(string message = null, string fileId = null, string userName = null, Card currentCard = null, IReplyMarkup? replyMarkup = null)
+        public void AddPlayerAction(string message = null, string userName = null, Card currentCard = null, ImageFileInfo? imgFile = null, IReplyMarkup? replyMarkup = null)
         {
-            PlayerActions.Enqueue(new(message, userName, fileId, currentCard, replyMarkup));
+            PlayerActions.Enqueue(new(message, userName, currentCard, imgFile, replyMarkup));
         }
 
     }

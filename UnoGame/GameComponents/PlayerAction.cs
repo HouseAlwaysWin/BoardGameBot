@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot.Types.ReplyMarkups;
+using UnoGame.Telegram.Models;
 
 namespace UnoGame.GameComponents
 {
@@ -11,16 +12,16 @@ namespace UnoGame.GameComponents
     {
         public string UserName { get; set; }
         public string Message { get; set; }
-        public string FileId { get; set; }
-        public Card CurrentCard { get; set; }
+        public ImageFileInfo? ImgFile { get; set; }
+        public Card? CurrentCard { get; set; }
         public IReplyMarkup? ReplyMarkup { get; set; }
 
 
-        public PlayerAction(string message = "", string userName = "", string fileId = "", Card currentCard = null, IReplyMarkup replymarkUp = null)
+        public PlayerAction(string message = "", string userName = "", Card currentCard = null, ImageFileInfo? imgFile = null, IReplyMarkup replymarkUp = null)
         {
             UserName = userName;
             Message = message;
-            FileId = fileId;
+            ImgFile = imgFile;
             CurrentCard = currentCard;
             ReplyMarkup = replymarkUp;
         }

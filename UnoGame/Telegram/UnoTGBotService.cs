@@ -30,8 +30,10 @@ namespace UnoGame.Telegram
         private Dictionary<string, BotCommandInfo> _commands;
 
         private string ImgSourceRootPath = @"Source/UnoGame/Images";
+        private string StickerKey = "StickerKey";
+        private string StickerName = "";
+        private User? _botInfo;
 
-        public delegate Card GetCard(string id, string uniqueFiledId, string fileId, string name, int number, string imageUrl, CardColor? color);
 
         public UnoTGBotService(
             IGameService gameService,
@@ -41,6 +43,8 @@ namespace UnoGame.Telegram
         {
             _logger = logger;
             BotClient = new TelegramBotClient(token);
+            _botInfo = BotClient.GetMeAsync().Result;
+            StickerName = $"botUnoCard_by_{_botInfo.Username}";
             _gameService = gameService;
             _mapper = TGMapper.CreateMap();
             _commands = InitCommandsMapperAsync().Result;
@@ -120,7 +124,7 @@ namespace UnoGame.Telegram
 
             //foreach (var card in player.HandCards)
             //{
-            //    var msg = await BotClient.SendStickerAsync(message.From.Id, card.FileId);
+            //    var msg = await BotClient.SendStickerAsync(message.From.Id, card.FileUniqueId);
 
             //    await BotClient.DeleteMessageAsync(message.From.Id, msg.MessageId);
             //}
@@ -191,37 +195,60 @@ namespace UnoGame.Telegram
             return Task.CompletedTask;
         }
 
-        public async Task<StickerSet> GetCardStickersAsync(Message message)
+        public async Task<List<ImageFileInfo>> GetCardStickersAsync(Message message)
         {
 
-            var botInfo = await BotClient.GetMeAsync();
-            var stickerName = $"botUnoCard_by_{botInfo.Username}";
+            //var botInfo = await BotClient.GetMeAsync();
+            //var stickerName = $"botUnoCard_by_{botInfo.Username}";
             StickerSet stickerSet = new StickerSet();
+            List<ImageFileInfo>? tgFiles = new List<ImageFileInfo>();
+            var sourceRootPath = @$"{AppContext.BaseDirectory}Source\UnoGame\Images";
+            var filesPath = Directory.GetFiles(sourceRootPath);
+
+            int firstEmojiUnicode = 0x1F601;
+            var emojiString = char.ConvertFromUtf32(firstEmojiUnicode);
+
             try
             {
 
-                stickerSet = await BotClient.GetStickerSetAsync(name: stickerName);
-                if (stickerSet.Stickers.Length != 54)
+                tgFiles = await _cachedService.GetAndSetAsync(StickerKey, new List<ImageFileInfo>());
+                stickerSet = await BotClient.GetStickerSetAsync(name: StickerName);
+                if (tgFiles.Count == 54 && stickerSet.Stickers.Count() == 54)
                 {
-                    foreach (var item in stickerSet.Stickers)
-                    {
-                        await BotClient.DeleteStickerFromSetAsync(item.FileId);
-                    }
-                    stickerSet = await BotClient.GetStickerSetAsync(name: stickerName);
+                    return tgFiles;
                 }
+                else if (stickerSet != null && stickerSet != null && stickerSet.Stickers.Count() == 54 && !tgFiles.Any() && tgFiles.Count != 54)
+                {
 
-                await _cachedService.GetAndSetAsync(stickerName, stickerSet);
-                return stickerSet;
+                    for (int i = 0; i < filesPath.Length; i++)
+                    {
+                        var fileInfo = new FileInfo(filesPath[i]);
+                        var emoji = char.ConvertFromUtf32(firstEmojiUnicode + i);
+                        tgFiles.Add(new(name: fileInfo.Name, emojiString: emoji));
+                    }
+
+                    foreach (var sticker in stickerSet.Stickers)
+                    {
+                        var tgFile = tgFiles.FirstOrDefault(t => t.EmojiString == sticker.Emoji);
+                        tgFile.FileId = sticker.FileId;
+                        tgFile.FileUniqueId = sticker.FileUniqueId;
+                        tgFile.FileSize = sticker.FileSize;
+                    }
+
+                    return tgFiles;
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
             }
 
-            var sourceRootPath = @$"{AppContext.BaseDirectory}\Source\Images";
-            var filesPath = Directory.GetFiles(sourceRootPath);
+            foreach (var item in stickerSet.Stickers)
+            {
+                await BotClient.DeleteStickerFromSetAsync(item.FileId);
+            }
 
-            List<ImageFileInfo> tgFiles = new List<ImageFileInfo>();
+
             foreach (var path in filesPath)
             {
                 var fileBytes = await IOFile.ReadAllBytesAsync(path);
@@ -238,44 +265,59 @@ namespace UnoGame.Telegram
                     {
                         var fileInfo = new FileInfo(path);
                         var file = await BotClient.UploadStickerFileAsync(
-                            userId: botInfo.Id,
+                            userId: _botInfo.Id,
                             pngSticker: new InputFileStream(ms));
-                        tgFiles.Add(new ImageFileInfo()
-                        {
-                            TGFile = file,
-                            FileInfo = fileInfo
-                        });
                     }
                     catch (Exception ex)
                     {
                         _logger.Log(LogLevel.Error, $"{ex}");
-                        return stickerSet;
+                        return tgFiles;
                     }
                 }
             }
 
-            int firstEmojiUnicode = 0x1F601;
-            var emojiString = char.ConvertFromUtf32(firstEmojiUnicode);
 
-            await BotClient.CreateNewStaticStickerSetAsync(
-                userId: message.From.Id,
-                name: stickerName,
-                title: "Uno遊戲卡牌",
-                pngSticker: tgFiles[0].TGFile.FileId,
-                emojis: emojiString);
+            try
+            {
+                await BotClient.CreateNewStaticStickerSetAsync(
+                    userId: message.From.Id,
+                    name: StickerName,
+                    title: "Uno遊戲卡牌",
+                    pngSticker: tgFiles[0].FileId,
+                    emojis: emojiString);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+            }
 
             for (int i = 0; i < tgFiles.Count; i++)
             {
                 var tgFile = tgFiles[i];
                 emojiString = char.ConvertFromUtf32(firstEmojiUnicode + i);
+                tgFile.EmojiString = emojiString;
                 await BotClient.AddStaticStickerToSetAsync(
                     userId: message.From.Id,
-                    name: stickerName,
-                    pngSticker: tgFile.TGFile.FileId,
+                    name: StickerName,
+                    pngSticker: tgFile.FileId,
                     emojis: emojiString);
             }
-            stickerSet = await BotClient.GetStickerSetAsync(stickerName);
-            return stickerSet;
+
+            stickerSet = await BotClient.GetStickerSetAsync(StickerName);
+            foreach (var file in tgFiles)
+            {
+                var sticker = stickerSet.Stickers.FirstOrDefault(s => s.Emoji == file.EmojiString);
+                file.FileId = sticker.FileId;
+                file.FileUniqueId = sticker.FileUniqueId;
+                file.FileSize = sticker.FileSize;
+            }
+
+            var saveToCached = await _cachedService.SetAsync(StickerKey, tgFiles);
+            if (!saveToCached)
+            {
+                _logger.LogError("Save Image cached failed");
+            }
+            return tgFiles;
         }
 
 
@@ -297,12 +339,13 @@ namespace UnoGame.Telegram
             else if (message.Type == MessageType.Sticker && message.ViaBot != null)
             {
                 var playerId = message?.From?.Id.ToString();
-                var groupId = await _gameService.GetGroupIdAsync(playerId);
+                //var groupId = await _gameService.GetGroupIdAsync(playerId);
+                var groupId = message?.Chat.Id.ToString();
                 var stickerId = message?.Sticker?.FileId;
                 var uniqueFiledId = message?.Sticker?.FileUniqueId;
                 if (!string.IsNullOrEmpty(playerId) && !string.IsNullOrEmpty(stickerId))
                 {
-                    var res = await _gameService.HandlePlayerAction(playerId, uniqueFiledId, null);
+                    var res = await _gameService.HandlePlayerAction(playerId, new(fileUniqueId: uniqueFiledId), null);
 
                     var gameGroup = await _gameService.GetGameGroupAsync(groupId);
                     if (gameGroup != null && gameGroup.IsGameStart)
@@ -369,17 +412,15 @@ namespace UnoGame.Telegram
             return true;
         }
 
-        private Card GetCardType(string id, string uniqueFiledId, string fileId, string name, int number, string imageUrl, CardType cardType, CardColor? color)
+        private Card GetCardType(string id, string name, int number, ImageFileInfo imgFile, CardType cardType, CardColor? color)
         {
             return new Card
             {
                 Id = id,
-                UniqueFileId = uniqueFiledId,
-                FileId = fileId,
                 Name = name,
                 CardType = cardType,
                 Color = color,
-                Image = imageUrl,
+                ImageFile = imgFile,
                 Number = number,
             };
         }
@@ -403,52 +444,50 @@ namespace UnoGame.Telegram
             List<CardTypeMapper> cardTypeMapper = new List<CardTypeMapper>()
             {
                 new( @"(?<color>\w+)(?<number>\d+)\.png",
-                    (id,uniqueFiledId,fileId,name,number,imgUrl,cardType,color) => GetCardType(id,uniqueFiledId,fileId,name,number,imgUrl,CardType.Number,color)),
+                    (id,name,number,imgFile,cardType,color) => GetCardType(id,name,number,imgFile,CardType.Number,color)),
                 new( @"(?<color>\w+)DrawTwo.png",
-                     (id,uniqueFiledId,fileId,name,number,imgUrl,cardType,color) => GetCardType(id,uniqueFiledId,fileId,name,-1,imgUrl,CardType.DrawTwo,color)),
+                     (id,name,number,imgFile,cardType,color) => GetCardType(id,name,-1,imgFile,CardType.DrawTwo,color)),
                 new(@"(?<color>\w+)Skip.png",
-                     (id,uniqueFiledId,fileId,name,number,imgUrl,cardType,color) => GetCardType(id, uniqueFiledId, fileId, name, -1, imgUrl, CardType.Skip, color)),
+                     (id,name,number,imgFile,cardType,color) => GetCardType(id,  name, -1, imgFile, CardType.Skip, color)),
                 new(@"(?<color>\w+)Reverse.png",
-                    (id,uniqueFiledId,fileId,name,number,imgUrl,cardType,color) => GetCardType(id, uniqueFiledId, fileId, name, -1, imgUrl, CardType.Reverse, color)),
+                    (id,name,number,imgFile,cardType,color) => GetCardType(id,  name, -1, imgFile, CardType.Reverse, color)),
                 new(@"wild.png",
-                     (id,uniqueFiledId,fileId,name,number,imgUrl,cardType,color) => GetCardType(id, uniqueFiledId, fileId, name, -1, imgUrl, CardType.Wild, null)),
+                     (id,name,number,imgFile,cardType,color) => GetCardType(id, name, -1, imgFile, CardType.Wild, null)),
                 new(@"wildDrawFour.png",
-                     (id,uniqueFiledId,fileId,name,number,imgUrl,cardType,color) => GetCardType(id, uniqueFiledId, fileId, name, -1, imgUrl, CardType.WildDrawFour, null))
+                     (id,name,number,imgFile,cardType,color) => GetCardType(id, name, -1, imgFile, CardType.WildDrawFour, null))
         };
 
-            for (int i = 0; i < stickers.Stickers.Length; i++)
+            foreach (var img in stickers)
             {
-                var sticker = stickers.Stickers[i];
-                var fileInfo = fileInfos[i];
-
-                var mapCard = cardTypeMapper.FirstOrDefault(c => Regex.IsMatch(fileInfo.Name, c.RegexPattern));
-
-                var numberStr = Regex.Matches(fileInfo.Name, mapCard.RegexPattern).Select(r => r.Groups["number"].Value).FirstOrDefault();
-                int number = -1;
-                if (!int.TryParse(numberStr, out number))
+                var mapCard = cardTypeMapper.FirstOrDefault(c => Regex.IsMatch(img.Name, c.RegexPattern));
+                if (mapCard != null)
                 {
-                    number = -1;
-                }
 
-                CardColor? color = null;
-                var colorName = Regex.Matches(fileInfo.Name, mapCard.RegexPattern).Select(r => r.Groups["color"].Value).FirstOrDefault();
-                if (!string.IsNullOrEmpty(colorName))
-                {
-                    var cardColorName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(colorName.ToLower());
-                    color = (CardColor)Enum.Parse(typeof(CardColor), cardColorName);
-                }
-                string imgUrl = @$"{ImgSourceRootPath}/{fileInfo.Name}";
+                    var numberStr = Regex.Matches(img.Name, mapCard.RegexPattern).Select(r => r.Groups["number"].Value).FirstOrDefault();
+                    int number = -1;
+                    if (!int.TryParse(numberStr, out number))
+                    {
+                        number = -1;
+                    }
 
-                var baseCard = mapCard.GetCardAction.Invoke(
-                    id: Guid.NewGuid().ToString("N"),
-                    uniqueFiledId: sticker.FileUniqueId,
-                    fileId: sticker.FileId,
-                    name: fileInfo.Name,
-                    number: number,
-                    cardType: CardType.Number,
-                    imageUrl: imgUrl,
-                    color: color);
-                baseCards.Add(baseCard);
+                    CardColor? color = null;
+                    var colorName = Regex.Matches(img.Name, mapCard.RegexPattern).Select(r => r.Groups["color"].Value).FirstOrDefault();
+                    if (!string.IsNullOrEmpty(colorName))
+                    {
+                        var cardColorName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(colorName.ToLower());
+                        color = (CardColor)Enum.Parse(typeof(CardColor), cardColorName);
+                    }
+                    string imgUrl = @$"{ImgSourceRootPath}/{img.Name}";
+
+                    var baseCard = mapCard.GetCardAction.Invoke(
+                        id: Guid.NewGuid().ToString("N"),
+                        name: img.Name,
+                        number: number,
+                        cardType: CardType.Number,
+                        imgFile: img,
+                        color: color);
+                    baseCards.Add(baseCard);
+                }
             }
 
             var host = _mapper.Map<Player>(message.From);
@@ -546,7 +585,7 @@ namespace UnoGame.Telegram
                     var currentPlayer = gameGroup.Players.Peek();
                     if (playerId == currentPlayer.Id)
                     {
-                        var res = await _gameService.HandlePlayerAction(playerId, gameGroup.CardOnBoard.UniqueFileId, null, true);
+                        var res = await _gameService.HandlePlayerAction(playerId, gameGroup.CardOnBoard.ImageFile, null, true);
                         gameGroup = await _gameService.GetGameGroupAsync(groupId);
                         if (gameGroup != null && gameGroup.IsGameStart)
                         {
@@ -582,9 +621,12 @@ namespace UnoGame.Telegram
                                  text: action.Message,
                                  replyMarkup: action.ReplyMarkup);
                     }
-                    else if (!string.IsNullOrEmpty(action.FileId))
+                    else if (action.ImgFile != null)
                     {
-                        await BotClient.SendStickerAsync(chatId, action.FileId);
+                        //var stickers = await BotClient.GetStickerSetAsync(StickerName);
+                        //var file = stickers.Stickers.FirstOrDefault(s => s.FileUniqueId == action.ImgFile.FileUniqueId);
+                        //var file2 = stickers.Stickers.FirstOrDefault(s => s.Emoji == action.ImgFile.EmojiString);
+                        await BotClient.SendStickerAsync(chatId, action.ImgFile.FileId);
                     }
                 }
             }
@@ -614,7 +656,7 @@ namespace UnoGame.Telegram
                             // remove selected keyboard
                             await BotClient.EditMessageReplyMarkupAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, null);
                             var color = colorNumber.GetCallbackCardColor();
-                            var res = await _gameService.HandlePlayerAction(playerId, uniqueFiledId, color);
+                            var res = await _gameService.HandlePlayerAction(playerId, new(fileUniqueId: uniqueFiledId), color);
                             gameGroup = await _gameService.GetGameGroupAsync(groupId);
                             if (gameGroup != null)
                             {
@@ -644,7 +686,9 @@ namespace UnoGame.Telegram
                 {
                     foreach (var c in player.HandCards)
                     {
-                        cards.Add(new InlineQueryResultCachedSticker(Guid.NewGuid().ToString(), c.FileId));
+                        //var stickers = await BotClient.GetStickerSetAsync(StickerName);
+                        //var file = stickers.Stickers.FirstOrDefault(s => s.Emoji == c.ImageFile.EmojiString);
+                        cards.Add(new InlineQueryResultCachedSticker(Guid.NewGuid().ToString(), c.ImageFile.FileId));
                     }
                 }
             }

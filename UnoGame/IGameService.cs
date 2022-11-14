@@ -1,4 +1,5 @@
 ﻿using UnoGame.GameComponents;
+using UnoGame.Telegram.Models;
 
 namespace UnoGame
 {
@@ -18,7 +19,7 @@ namespace UnoGame
         Task<ResponseInfo> ShowGameStateAsync(string groupId);
         Task<Card?> GetPlayerCardAsync(string fileId, string playerId);
         Task<Player?> GetPlayerAsync(string playerId);
-        Task<ResponseInfo> HandlePlayerAction(string playerId, string fileId, CardColor? color = null, bool isPass = false);
+        Task<ResponseInfo> HandlePlayerAction(string playerId,ImageFileInfo imgFile, CardColor? color = null, bool isPass = false);
         Task HandleBotActionAsync(GameGroup gameGroup, ResponseInfo res);
         //Task<bool> SaveGameGroupsAsync(Dictionary<string, GameGroup> gameGroups);
     }
