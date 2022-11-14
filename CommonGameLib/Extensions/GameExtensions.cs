@@ -10,7 +10,7 @@ namespace CommonGameLib.Extensions
 {
     public static class ThreadSafeRandom
     {
-        [ThreadStatic] private static Random Local;
+        [ThreadStatic] private static Random? Local;
 
         public static Random ThisThreadsRandom
         {
@@ -23,7 +23,7 @@ namespace CommonGameLib.Extensions
         private static Random rng = new Random();
 
 
-        public static T CloneObj<T>(this object obj)
+        public static T? CloneObj<T>(this object obj)
         {
             var serializeObj = JsonConvert.SerializeObject(obj);
             if (serializeObj != null)
@@ -33,10 +33,14 @@ namespace CommonGameLib.Extensions
             return default(T);
         }
 
-        public static T RandomEnumValue<T>()
+        public static T? RandomEnumValue<T>()
         {
             var v = Enum.GetValues(typeof(T));
-            return (T)v.GetValue(rng.Next(v.Length));
+            if (v != null && rng != null)
+            {
+                return (T?)v.GetValue(rng.Next(v.Length));
+            }
+            return default(T);
         }
 
         public static Stack<T> Shuffle<T>(this Stack<T> stack)

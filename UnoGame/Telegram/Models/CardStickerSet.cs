@@ -10,6 +10,6 @@ namespace UnoGame.Telegram.Models
     {
         public string Name { get; set; }
         public string Title { get; set; }
-        public List<CardSticker> CardStickers { get; set; }
+        public List<CardSticker>? CardStickers { get; set; }
     }
 }

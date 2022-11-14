@@ -27,7 +27,7 @@ namespace CommonGameLib.Services
         }
 
 
-        public async Task<T> GetAsync<T>(string key) where T : class
+        public async Task<T?> GetAsync<T>(string key) where T : class
         {
             string data = await _db.GetStringAsync(key);
 
@@ -35,10 +35,10 @@ namespace CommonGameLib.Services
             {
                 return JsonConvert.DeserializeObject<T>(data);
             }
-            return null;
+            return default(T);
         }
 
-        public T Get<T>(string key) where T : class
+        public T? Get<T>(string key) where T : class
         {
             string data = _db.GetString(key);
 
@@ -46,7 +46,7 @@ namespace CommonGameLib.Services
             {
                 return JsonConvert.DeserializeObject<T>(data);
             }
-            return null;
+            return default(T);
         }
 
         public async Task<bool> SetAsync<T>(string key, T data, TimeSpan? time) where T : class
@@ -87,7 +87,7 @@ namespace CommonGameLib.Services
             return true;
         }
 
-        public async Task<T> GetAndSetAsync<T>(string key, T data, TimeSpan? time = null) where T : class
+        public async Task<T?> GetAndSetAsync<T>(string key, T data, TimeSpan? time = null) where T : class
         {
             var cachedData = await GetAsync<T>(key);
             if (cachedData != null)
@@ -102,7 +102,7 @@ namespace CommonGameLib.Services
             return default;
         }
 
-        public async Task<T> GetAndSetAsync<T>(string key, Func<Task<T>> acquire, TimeSpan? time = null) where T : class
+        public async Task<T?> GetAndSetAsync<T>(string key, Func<Task<T>> acquire, TimeSpan? time = null) where T : class
         {
             var cachedData = await GetAsync<T>(key);
             if (cachedData != null)
@@ -119,7 +119,7 @@ namespace CommonGameLib.Services
             return data;
         }
 
-        public T GetAndSet<T>(string key, Func<T> acquire, TimeSpan? time = null) where T : class
+        public T? GetAndSet<T>(string key, Func<T> acquire, TimeSpan? time = null) where T : class
         {
             var cachedData = Get<T>(key);
             if (cachedData != null)

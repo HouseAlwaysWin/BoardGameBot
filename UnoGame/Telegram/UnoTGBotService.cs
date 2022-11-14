@@ -601,7 +601,7 @@ namespace UnoGame.Telegram
 
                 if (playerId == currentPlayer.Id)
                 {
-                    if (callbackQuery.Data != null)
+                    if (callbackQuery?.Data != null)
                     {
                         var callbackData = callbackQuery.Data.Split(';');
                         var key = callbackData[0];
@@ -652,8 +652,9 @@ namespace UnoGame.Telegram
             await BotClient.AnswerInlineQueryAsync(inlineQuery.Id, cards, 0, true);
         }
 
-        private async Task ChosenInlineResultAsync(ChosenInlineResult chosenInlineResult)
+        private Task ChosenInlineResultAsync(ChosenInlineResult chosenInlineResult)
         {
+            return Task.CompletedTask;
         }
 
         private Task UnknownUpdateHandlerAsync(Update update)

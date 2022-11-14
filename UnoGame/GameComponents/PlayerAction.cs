@@ -16,7 +16,7 @@ namespace UnoGame.GameComponents
         public IReplyMarkup? ReplyMarkup { get; set; }
 
 
-        public PlayerAction(string message = null, string userName = null, string fileId = null, Card currentCard = null, IReplyMarkup replymarkUp = null)
+        public PlayerAction(string message = "", string userName = "", string fileId = "", Card currentCard = null, IReplyMarkup replymarkUp = null)
         {
             UserName = userName;
             Message = message;
