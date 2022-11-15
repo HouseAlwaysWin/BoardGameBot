@@ -2,7 +2,9 @@
 using CommonGameLib.Services;
 using Microsoft.Extensions.Logging;
 using System.Text;
+using System.Text.RegularExpressions;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 using UnoGame.Extensions;
 using UnoGame.GameComponents;
 using UnoGame.Telegram.Models;
@@ -13,7 +15,7 @@ namespace UnoGame
     {
         private readonly ICachedService _cachedService;
         private readonly ILogger<GameService> _logger;
-        private Dictionary<string, string> _gameGroupIdMapper;
+        //private Dictionary<string, string> _gameGroupIdMapper;
         public string GroupIdMapper { get => "GroupIdMapper"; }
         public string GameGroupsKey { get => "GameGroups"; }
 
@@ -23,49 +25,43 @@ namespace UnoGame
             _logger = logger;
         }
 
-        public async Task<string> GetGroupIdAsync(string userId)
+        public async Task<List<string>?> GetGroupIdAsync(string userId)
         {
-            var groupIdMapper = await _cachedService.GetAsync<Dictionary<string, string>>(GroupIdMapper);
-            if (groupIdMapper != null)
+            var groups = await GetGameGrouopsAsync();
+            if (groups != null)
             {
-                return groupIdMapper[userId];
+                var groupsId = groups.Where(g => g.Players.Select(p => p.Id).Contains(userId)).ToList();
             }
-            return string.Empty;
+            return null;
         }
 
-        public async Task<GameGroup?> GetGameGrouopByUserAsync(string userId)
+        public async Task<List<GameGroup>?> GetGameGrouopByUserAsync(string userId)
         {
-            var groupId = await GetGroupIdAsync(userId);
-            var gameGroups = await _cachedService.GetAsync<Dictionary<string, GameGroup>>(GameGroupsKey);
-            if (gameGroups != null)
+
+            var groups = await GetGameGrouopsAsync();
+            if (groups != null)
             {
-                if (gameGroups.ContainsKey(groupId))
-                {
-                    return gameGroups[groupId];
-                }
+                return groups.Where(g => g.Players.Select(p => p.Id).Contains(userId)).ToList();
             }
             return null;
         }
 
         public async Task<GameGroup?> GetGameGroupAsync(string groupId)
         {
-            var gameGroups = await _cachedService.GetAsync<Dictionary<string, GameGroup>>(GameGroupsKey);
+            var gameGroups = await GetGameGrouopsAsync();
             if (gameGroups != null)
             {
-                if (gameGroups.ContainsKey(groupId))
-                {
-                    return gameGroups[groupId];
-                }
+                return gameGroups.FirstOrDefault(g => g.GroupId == groupId);
             }
             return null;
         }
 
-        public async Task<Dictionary<string, GameGroup>> GetOrInitGameGrouopsAsync()
+        public async Task<List<GameGroup>> GetGameGrouopsAsync()
         {
-            return await _cachedService.GetAndSetAsync(GameGroupsKey, new Dictionary<string, GameGroup>());
+            return await _cachedService.GetAndSetAsync(GameGroupsKey, new List<GameGroup>());
         }
 
-        public async Task<ResponseInfo> NewGameAsync(string groupId, Player host, List<Card> baseCards)
+        public async Task<ResponseInfo> NewGameAsync(string groupId, string groupName, Player host, List<Card> baseCards)
         {
             var res = new ResponseInfo();
             if (string.IsNullOrEmpty(groupId))
@@ -74,7 +70,14 @@ namespace UnoGame
                 return res;
             }
 
+            if (string.IsNullOrEmpty(groupName))
+            {
+                res.AddPlayerAction("群組名稱不能為空");
+                return res;
+            }
+
             Stack<Card> totalCards = new Stack<Card>();
+
 
             foreach (var card in baseCards)
             {
@@ -99,52 +102,40 @@ namespace UnoGame
                 }
             }
 
-            GameGroup newGameGroup = new GameGroup()
+            var gameGroups = await GetGameGrouopsAsync();
+            if (gameGroups != null)
             {
-                GroupId = groupId,
-                Cards = totalCards,
-                Discards = new Stack<Card>(),
-                Players = new Queue<Player>(),
-                Host = host
-            };
-            var gameGroup = await GetGameGroupAsync(groupId);
-            if (gameGroup == null)
-            {
-                _gameGroupIdMapper = new Dictionary<string, string>();
-                _gameGroupIdMapper.Add(host.Id, groupId);
-                var groupIdMapper = await _cachedService.GetAndSetAsync(GroupIdMapper, _gameGroupIdMapper);
-                if (groupIdMapper.ContainsKey(host.Id))
-                {
-                    groupIdMapper[host.Id] = groupId;
-                }
+                var isGroupNameExist = gameGroups.Where(g => g.GroupName == groupName).Count() > 0;
 
-                var gameGrouops = await GetOrInitGameGrouopsAsync();
-                gameGroup = new GameGroup
+                var gameGroup = await GetGameGroupAsync(groupId);
+                if (gameGroup == null && !isGroupNameExist)
                 {
-                    GroupId = groupId,
-                    Players = new Queue<Player>(),
-                    Cards = totalCards,
-                    Host = host
-                };
-                gameGroup.Players.Enqueue(host);
-                gameGrouops.Add(groupId, gameGroup);
-
-                await SaveGameGroupsAsync(gameGrouops, res);
-
-            }
-            else
-            {
-                if (gameGroup.IsGameStart)
-                {
-                    res.AddPlayerAction(@$"遊戲進行中...");
-                    var player = gameGroup.Players.Peek();
-                    res.AddPlayerAction(@$"目前輪到玩家 @{player.Username}");
+                    gameGroup = new GameGroup
+                    {
+                        GroupName = groupName,
+                        GroupId = groupId,
+                        Players = new Queue<Player>(),
+                        Cards = totalCards,
+                        Host = host
+                    };
+                    gameGroup.Players.Enqueue(host);
+                    gameGroups.Add(gameGroup);
+                    await SaveGameGroupsAsync(gameGroups, res);
                 }
                 else
                 {
-                    res.AddPlayerAction(@$"已開局，開局者：@{host.Username}");
+                    if (gameGroup.IsGameStart)
+                    {
+                        res.AddPlayerAction(@$"遊戲進行中...");
+                        var player = gameGroup.Players.Peek();
+                        res.AddPlayerAction(@$"目前輪到玩家 @{player.Username}");
+                    }
+                    else
+                    {
+                        res.AddPlayerAction(@$"已開局，開局者：@{host.Username}");
+                    }
+                    return res;
                 }
-                return res;
             }
             res.AddPlayerAction(@$"開始新遊戲，開局者：@{host.Username}");
             return res;
@@ -238,7 +229,7 @@ namespace UnoGame
             var nextPlayer = gameGroup.Players.Peek();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            res.AddPlayerAction("", currentPlayer?.Username, throwCard, throwCard.ImageFile);
+            //res.AddPlayerAction("", currentPlayer?.Username, throwCard, throwCard.ImageFile);
 
             gameGroup.CardOnBoard = throwCard;
         }
@@ -257,7 +248,7 @@ namespace UnoGame
             var nextPlayer = gameGroup.Players.Peek();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
+            //res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
             res.AddPlayerAction($@"跳過玩家 @{skipNextPlayer.Username}");
 
             gameGroup.CardOnBoard = throwCard;
@@ -283,7 +274,7 @@ namespace UnoGame
             var nextPlayer = gameGroup.Players.Peek();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
+            //res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
             res.AddPlayerAction($@"玩家 @{skipNextPlayer.Username} 抽兩張牌並跳過");
 
 
@@ -305,7 +296,7 @@ namespace UnoGame
             var nextPlayer = gameGroup.Players.Peek();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
+            //res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
             res.AddPlayerAction($@"反轉");
 
             gameGroup.CardOnBoard = throwCard;
@@ -326,7 +317,7 @@ namespace UnoGame
             var colorStr = throwCard.Color.Value.GetCardColorName();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
+            //res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
             res.AddPlayerAction($@"顏色選擇{colorStr}");
 
             gameGroup.CardOnBoard = throwCard;
@@ -354,7 +345,7 @@ namespace UnoGame
             var colorName = throwCard.Color.Value.GetCardColorName();
 
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
+            //res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
             res.AddPlayerAction($@"顏色選擇{colorName}，玩家 @{skipNextPlayer.Username} 抽四張牌並跳過");
 
 
@@ -376,7 +367,7 @@ namespace UnoGame
         }
 
 
-        private async Task CheckPlayerState(GameGroup gameGroup, Player player, Player nextPlayer, ResponseInfo res)
+        private async Task<bool> CheckPlayerState(GameGroup gameGroup, Player player, Player nextPlayer, ResponseInfo res)
         {
             var playerHandCardCount = player.HandCards.Count;
             if (playerHandCardCount == 1)
@@ -387,22 +378,24 @@ namespace UnoGame
             if (playerHandCardCount == 0)
             {
                 res.AddPlayerAction($@"玩家 @{player.Username} 獲勝 !!!");
-                var gameGroups = await GetOrInitGameGrouopsAsync();
+                var gameGroups = await GetGameGrouopsAsync();
                 if (gameGroups != null)
                 {
-                    if (gameGroups.ContainsKey(gameGroup.GroupId))
+                    gameGroups = gameGroups.Where(g => g.GroupId != gameGroup.GroupId).ToList();
+                    var saveToCached = await SaveGameGroupsAsync(gameGroups, res);
+                    if (!saveToCached)
                     {
-                        gameGroups.Remove(gameGroup.GroupId);
-                        await SaveGameGroupsAsync(gameGroups, res);
+                        res.AddPlayerAction("儲存GameGroups發生錯誤");
                     }
                 }
                 res.AddPlayerAction("遊戲結束");
-                gameGroup.IsGameStart = false;
+                return true;
             }
             else
             {
                 res.AddPlayerAction($"輪到玩家：@{nextPlayer.Username}");
             }
+            return false;
         }
 
         private void CheckCardNeedShuffle(GameGroup gameGroup)
@@ -423,13 +416,15 @@ namespace UnoGame
 
 
 
-        public async Task<ResponseInfo> HandlePlayerAction(string playerId, ImageFileInfo imgFile, CardColor? color = null, bool isPass = false)
+        public async Task<ResponseInfo> HandlePlayerAction(string groupId, string playerId, ImageFileInfo imgFile, CardColor? color = null, bool isPass = false)
         {
             ResponseInfo res = new ResponseInfo();
 
-            var gameGroup = await GetGameGrouopByUserAsync(playerId);
-            var playerSendCard = await GetPlayerCardAsync(imgFile.FileUniqueId, playerId);
-            var player = await GetPlayerAsync(playerId);
+            var gameGroup = await GetGameGroupAsync(groupId);
+            var playerSendCard = await GetPlayerCardAsync(imgFile.FileUniqueId, groupId, playerId);
+            var player = await GetPlayerAsync(groupId, playerId);
+
+
             if (isPass && player != null && gameGroup != null)
             {
                 CardPassAction(gameGroup, player, res);
@@ -504,10 +499,13 @@ namespace UnoGame
             }
 
             var nextPlayer = gameGroup.Players.Peek();
-            await CheckPlayerState(gameGroup, player, nextPlayer, res);
-            CheckCardNeedShuffle(gameGroup);
+            var gameOver = await CheckPlayerState(gameGroup, player, nextPlayer, res);
+            if (!gameOver)
+            {
+                CheckCardNeedShuffle(gameGroup);
 
-            await SaveGameGroupAsync(gameGroup, res);
+                await SaveGameGroupAsync(gameGroup, res);
+            }
 
             return res;
         }
@@ -569,13 +567,18 @@ namespace UnoGame
                 {
                     CardPassAction(gameGroup, currentPlayerQueue, res);
                 }
-
                 var nextPlayer = gameGroup.Players.Peek();
-                await CheckPlayerState(gameGroup, currentPlayerQueue, nextPlayer, res);
-                CheckCardNeedShuffle(gameGroup);
+
+                var gameOver = await CheckPlayerState(gameGroup, currentPlayerQueue, nextPlayer, res);
+
+                if (!gameOver)
+                {
+                    CheckCardNeedShuffle(gameGroup);
+                    await SaveGameGroupAsync(gameGroup, res);
+                }
             }
 
-            await SaveGameGroupAsync(gameGroup, res);
+
         }
 
         public async Task<ResponseInfo> StartGameAsync(string groupId, Player player)
@@ -612,7 +615,7 @@ namespace UnoGame
 
             foreach (var p in gameGroup.Players.ToList())
             {
-                for (int i = 0; i < 7; i++)
+                for (int i = 0; i < 1; i++)
                 {
                     p.HandCards.Add(gameGroup.Cards.Pop());
                 }
@@ -650,9 +653,6 @@ namespace UnoGame
             res.AddPlayerAction(msgBuilder.ToString());
             res.AddPlayerAction(imgFile: firstCard.ImageFile);
 
-            StringBuilder botMsgBuilder = new StringBuilder();
-            var firstPlayer = gameGroup.Players.Peek();
-
             await HandleBotActionAsync(gameGroup, res);
 
             await SaveGameGroupAsync(gameGroup, res);
@@ -671,20 +671,21 @@ namespace UnoGame
                     res.AddPlayerAction($@"強制結束遊戲必須由開局者 @{player.Username} 操作");
                     return res;
                 }
-
-                //if (!gameGroup.IsGameStart)
-                //{
-                //    res.AddPlayerAction($@"遊戲尚未開始，請先開局者 @{gameGroup.Host.Username} 執行開局指令 /start");
-                //    return res;
-                //}
+            }
+            else
+            {
+                res.AddPlayerAction("遊戲尚未開局，請先執行開局指令 /new");
+                return res;
             }
 
-            var gameGroups = await GetOrInitGameGrouopsAsync();
+            var gameGroups = await GetGameGrouopsAsync();
             if (gameGroups != null)
             {
-                if (gameGroups.ContainsKey(groupId))
+                if (gameGroups.Any(g => g.GroupId == groupId))
                 {
-                    gameGroups.Remove(groupId);
+                    var index = gameGroups.FindIndex(g => g.GroupId == groupId);
+                    //gameGroups = gameGroups.Where(g => g.GroupId != groupId).ToList();
+                    gameGroups.RemoveAt(index);
                     var saveToCached = await SaveGameGroupsAsync(gameGroups, res);
                     if (!saveToCached)
                     {
@@ -696,10 +697,10 @@ namespace UnoGame
 
             return res;
         }
-        public async Task<Card?> GetPlayerCardAsync(string uniqueFiledId, string playerId)
+        public async Task<Card?> GetPlayerCardAsync(string uniqueFiledId, string groupId, string playerId)
         {
             var res = new ResponseInfo();
-            var player = await GetPlayerAsync(playerId);
+            var player = await GetPlayerAsync(groupId, playerId);
             if (player != null)
             {
                 var card = player.HandCards.FirstOrDefault(c => c.ImageFile.FileUniqueId == uniqueFiledId);
@@ -708,12 +709,17 @@ namespace UnoGame
             return null;
         }
 
-        public async Task<Player?> GetPlayerAsync(string playerId)
+        public async Task<Player?> GetPlayerAsync(string groupId, string playerId)
         {
-            var gameGroup = await GetGameGrouopByUserAsync(playerId);
-            if (gameGroup != null)
+            var gameGroups = await GetGameGrouopsAsync();
+            if (gameGroups != null)
             {
-                return gameGroup.Players.FirstOrDefault(p => p.Id == playerId);
+                var gameGroup = gameGroups.Where(g => g.GroupId == groupId).FirstOrDefault();
+                if (gameGroup != null)
+                {
+                    var player = gameGroup.Players.FirstOrDefault(p => p.Id == playerId);
+                    return player;
+                }
             }
             return null;
         }
@@ -764,7 +770,49 @@ namespace UnoGame
                 gameStateBuilder.AppendLine();
                 gameStateBuilder.AppendLine($@"棄牌數：{gameGroup.Discards.Count} 張");
             }
+            else
+            {
+                res.AddPlayerAction("遊戲尚未開局，請先執行開局指令 /new");
+                return res;
+            }
             res.AddPlayerAction(gameStateBuilder.ToString());
+            return res;
+        }
+
+        public async Task<ResponseInfo> PassGameAsync(string groupId, string playerId)
+        {
+
+            var gameGroup = await GetGameGroupAsync(groupId);
+            var res = new ResponseInfo();
+            if (gameGroup != null)
+            {
+                if (gameGroup.IsGameStart)
+                {
+                    var currentPlayer = gameGroup.Players.Peek();
+                    if (playerId == currentPlayer.Id)
+                    {
+                        res = await HandlePlayerAction(groupId, playerId, gameGroup.CardOnBoard.ImageFile, null, true);
+                        gameGroup = await GetGameGroupAsync(groupId);
+                        if (gameGroup != null && gameGroup.IsGameStart)
+                        {
+                            var nextPlayer = gameGroup.Players.Peek();
+                            if (nextPlayer.IsBot)
+                            {
+                                await HandleBotActionAsync(gameGroup, res);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        res.AddPlayerAction($@"現在輪到玩家是： @{currentPlayer.Username}");
+                        //await BotClient.SendTextMessageAsync(groupId, $@"現在輪到玩家是： @{currentPlayer.Username}");
+                    }
+                }
+            }
+            else
+            {
+                res.AddPlayerAction("遊戲尚未開局，請先執行開局指令 /new");
+            }
             return res;
         }
 
@@ -778,12 +826,12 @@ namespace UnoGame
         {
             try
             {
-                var gameGroups = await _cachedService.GetAndSetAsync(GameGroupsKey, new Dictionary<string, GameGroup>());
+                var gameGroups = await GetGameGrouopsAsync();
+                var newGameGroups = gameGroups.Where(g => g.GroupId != gameGroup.GroupId).ToList();
                 if (gameGroup != null)
                 {
-                    gameGroups[gameGroup.GroupId] = gameGroup;
-
-                    return await _cachedService.SetAsync(GameGroupsKey, gameGroups);
+                    newGameGroups.Add(gameGroup);
+                    return await _cachedService.SetAsync(GameGroupsKey, newGameGroups);
                 }
                 res.AddPlayerAction(@$"儲存GameGroups發生錯誤");
                 return false;
@@ -795,7 +843,7 @@ namespace UnoGame
             }
         }
 
-        private async Task<bool> SaveGameGroupsAsync(Dictionary<string, GameGroup> gameGroups, ResponseInfo res)
+        private async Task<bool> SaveGameGroupsAsync(List<GameGroup> gameGroups, ResponseInfo res)
         {
             try
             {

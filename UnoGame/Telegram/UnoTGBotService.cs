@@ -345,7 +345,7 @@ namespace UnoGame.Telegram
                 var uniqueFiledId = message?.Sticker?.FileUniqueId;
                 if (!string.IsNullOrEmpty(playerId) && !string.IsNullOrEmpty(stickerId))
                 {
-                    var res = await _gameService.HandlePlayerAction(playerId, new(fileUniqueId: uniqueFiledId), null);
+                    var res = await _gameService.HandlePlayerAction(groupId, playerId, new(fileUniqueId: uniqueFiledId), null);
 
                     var gameGroup = await _gameService.GetGameGroupAsync(groupId);
                     if (gameGroup != null && gameGroup.IsGameStart)
@@ -373,7 +373,7 @@ namespace UnoGame.Telegram
                                     InlineKeyboardButton.WithCallbackData("黃色", $"color;4;{uniqueFiledId}"),
                                 },
                               });
-                            var player = await _gameService.GetPlayerAsync(playerId);
+                            var player = await _gameService.GetPlayerAsync(groupId, playerId);
 
                             res.AddPlayerAction(
                                 message: $"玩家 @{player.Username} 請選擇顏色：",
@@ -430,10 +430,11 @@ namespace UnoGame.Telegram
         {
             var groupId = message?.Chat?.Id.ToString();
             if (!await CheckGroupType(groupId, message.Chat.Type)) return;
+            var groupName = message?.Chat?.Title;
 
             var stickers = await GetCardStickersAsync(message);
             List<Card> baseCards = new List<Card>();
-            var sourceRootPath = @$"{AppContext.BaseDirectory}\{ImgSourceRootPath}";
+            var sourceRootPath = @$"{AppContext.BaseDirectory}{ImgSourceRootPath}";
             var filesPath = Directory.GetFiles(sourceRootPath);
             var fileInfos = new List<FileInfo>();
             foreach (var path in filesPath)
@@ -477,7 +478,6 @@ namespace UnoGame.Telegram
                         var cardColorName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(colorName.ToLower());
                         color = (CardColor)Enum.Parse(typeof(CardColor), cardColorName);
                     }
-                    string imgUrl = @$"{ImgSourceRootPath}/{img.Name}";
 
                     var baseCard = mapCard.GetCardAction.Invoke(
                         id: Guid.NewGuid().ToString("N"),
@@ -491,7 +491,7 @@ namespace UnoGame.Telegram
             }
 
             var host = _mapper.Map<Player>(message.From);
-            var res = await _gameService.NewGameAsync(groupId, host, baseCards);
+            var res = await _gameService.NewGameAsync(groupId, groupName, host, baseCards);
             await HandleResponseAsync(groupId, res);
         }
 
@@ -577,33 +577,8 @@ namespace UnoGame.Telegram
         {
             var groupId = message.Chat?.Id.ToString();
             var playerId = message.From?.Id.ToString();
-            var gameGroup = await _gameService.GetGameGroupAsync(groupId);
-            if (gameGroup != null)
-            {
-                if (gameGroup.IsGameStart)
-                {
-                    var currentPlayer = gameGroup.Players.Peek();
-                    if (playerId == currentPlayer.Id)
-                    {
-                        var res = await _gameService.HandlePlayerAction(playerId, gameGroup.CardOnBoard.ImageFile, null, true);
-                        gameGroup = await _gameService.GetGameGroupAsync(groupId);
-                        if (gameGroup != null && gameGroup.IsGameStart)
-                        {
-                            var nextPlayer = gameGroup.Players.Peek();
-                            if (nextPlayer.IsBot)
-                            {
-                                await _gameService.HandleBotActionAsync(gameGroup, res);
-                            }
-
-                        }
-                        await HandleResponseAsync(groupId, res);
-                    }
-                    else
-                    {
-                        await BotClient.SendTextMessageAsync(groupId, $@"現在輪到玩家是： @{currentPlayer.Username}");
-                    }
-                }
-            }
+            var res = await _gameService.PassGameAsync(groupId, playerId);
+            await HandleResponseAsync(groupId, res);
         }
 
         private async Task HandleResponseAsync(ChatId chatId, ResponseInfo res)
@@ -623,9 +598,6 @@ namespace UnoGame.Telegram
                     }
                     else if (action.ImgFile != null)
                     {
-                        //var stickers = await BotClient.GetStickerSetAsync(StickerName);
-                        //var file = stickers.Stickers.FirstOrDefault(s => s.FileUniqueId == action.ImgFile.FileUniqueId);
-                        //var file2 = stickers.Stickers.FirstOrDefault(s => s.Emoji == action.ImgFile.EmojiString);
                         await BotClient.SendStickerAsync(chatId, action.ImgFile.FileId);
                     }
                 }
@@ -656,7 +628,7 @@ namespace UnoGame.Telegram
                             // remove selected keyboard
                             await BotClient.EditMessageReplyMarkupAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, null);
                             var color = colorNumber.GetCallbackCardColor();
-                            var res = await _gameService.HandlePlayerAction(playerId, new(fileUniqueId: uniqueFiledId), color);
+                            var res = await _gameService.HandlePlayerAction(groupId, playerId, new(fileUniqueId: uniqueFiledId), color);
                             gameGroup = await _gameService.GetGameGroupAsync(groupId);
                             if (gameGroup != null)
                             {
@@ -676,24 +648,27 @@ namespace UnoGame.Telegram
         private async Task InlineQueryAsync(InlineQuery inlineQuery)
         {
             List<InlineQueryResultCachedSticker> cards = new List<InlineQueryResultCachedSticker>();
-            var playerId = inlineQuery?.From?.Id.ToString();
-            var groupId = await _gameService.GetGroupIdAsync(inlineQuery.From.Id.ToString());
-            var gameGroup = await _gameService.GetGameGroupAsync(groupId);
-            if (gameGroup != null)
+            var gameGroups = await _gameService.GetGameGrouopsAsync();
+            if (gameGroups != null)
             {
-                var player = await _gameService.GetPlayerAsync(playerId);
-                if (player != null)
+                var gameGroup = gameGroups.FirstOrDefault(g => g.GroupName == inlineQuery.Query);
+                if (gameGroup != null)
                 {
-                    foreach (var c in player.HandCards)
+                    var player = gameGroup.Players.FirstOrDefault(p => p.Id == inlineQuery.From.Id.ToString());
+                    if (player != null)
                     {
-                        //var stickers = await BotClient.GetStickerSetAsync(StickerName);
-                        //var file = stickers.Stickers.FirstOrDefault(s => s.Emoji == c.ImageFile.EmojiString);
-                        cards.Add(new InlineQueryResultCachedSticker(Guid.NewGuid().ToString(), c.ImageFile.FileId));
+                        foreach (var c in player.HandCards)
+                        {
+                            cards.Add(new InlineQueryResultCachedSticker(Guid.NewGuid().ToString(), c.ImageFile.FileId));
+                        }
+                        await BotClient.AnswerInlineQueryAsync(inlineQuery.Id, cards, 0, true);
                     }
                 }
+                //else
+                //{
+                //    await BotClient.SendTextMessageAsync(inlineQuery.From.Id, "請輸入遊戲群組名稱才能查詢手牌，例如： @MartinUnoBot MyGroup");
+                //}
             }
-
-            await BotClient.AnswerInlineQueryAsync(inlineQuery.Id, cards, 0, true);
         }
 
         private Task ChosenInlineResultAsync(ChosenInlineResult chosenInlineResult)

@@ -10,6 +10,7 @@ namespace UnoGame.GameComponents
     public class GameGroup
     {
         public string GroupId { get; set; }
+        public string GroupName { get; set; }
         //public List<Player> Players { get; set; }
         public Queue<Player> Players { get; set; }
         public bool IsGameStart { get; set; }
