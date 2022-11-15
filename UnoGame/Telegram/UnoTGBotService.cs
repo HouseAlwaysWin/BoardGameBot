@@ -664,10 +664,6 @@ namespace UnoGame.Telegram
                         await BotClient.AnswerInlineQueryAsync(inlineQuery.Id, cards, 0, true);
                     }
                 }
-                //else
-                //{
-                //    await BotClient.SendTextMessageAsync(inlineQuery.From.Id, "請輸入遊戲群組名稱才能查詢手牌，例如： @MartinUnoBot MyGroup");
-                //}
             }
         }
 
