@@ -45,9 +45,9 @@ namespace UnoGame.Extensions
             return string.Empty;
         }
 
-        public static string GetCardColorName(this CardColor cardColor)
+        public static string GetCardColorName(this CardColor? cardColor)
         {
-            if (CardColorsMapper.TryGetValue(cardColor, out var result))
+            if (CardColorsMapper.TryGetValue(cardColor.Value, out var result))
             {
                 return result;
             }

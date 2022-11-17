@@ -234,6 +234,19 @@ namespace UnoGame
             gameGroup.CardOnBoard = throwCard;
         }
 
+        public void ShowThrowCard(Player currentPlayer, Card throwCard, ResponseInfo res)
+        {
+            if (currentPlayer.IsBot)
+            {
+                res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
+                res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
+            }
+            else
+            {
+                res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌: {throwCard.Color.GetCardColorName()}{throwCard.CardType.GetCardTypeName()}");
+            }
+        }
+
         public void CardSkipAction(GameGroup gameGroup, Card? throwCard, Player currentPlayer, ResponseInfo res)
         {
             gameGroup.Discards.Push(throwCard);
@@ -247,8 +260,16 @@ namespace UnoGame
 
             var nextPlayer = gameGroup.Players.Peek();
 
-            res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            //res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
+            ShowThrowCard(currentPlayer, throwCard, res);
+            //if (currentPlayer.IsBot)
+            //{
+            //    res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
+            //    res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
+            //}
+            //else
+            //{
+            //    res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌: {throwCard.Color.GetCardColorName()}{throwCard.CardType.GetCardTypeName()}");
+            //}
             res.AddPlayerAction($@"跳過玩家 @{skipNextPlayer.Username}");
 
             gameGroup.CardOnBoard = throwCard;
@@ -272,9 +293,17 @@ namespace UnoGame
             gameGroup.Players.Enqueue(skipNextPlayer);
 
             var nextPlayer = gameGroup.Players.Peek();
+            ShowThrowCard(currentPlayer, throwCard, res);
 
-            res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
-            //res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
+            //if (currentPlayer.IsBot)
+            //{
+            //    res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
+            //    res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
+            //}
+            //else
+            //{
+            //    res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌: {throwCard.Color.GetCardColorName()}{throwCard.CardType.GetCardTypeName()}");
+            //}
             res.AddPlayerAction($@"玩家 @{skipNextPlayer.Username} 抽兩張牌並跳過");
 
 
@@ -295,7 +324,9 @@ namespace UnoGame
 
             var nextPlayer = gameGroup.Players.Peek();
 
-            res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
+            ShowThrowCard(currentPlayer, throwCard, res);
+
+            //res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
             //res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
             res.AddPlayerAction($@"反轉");
 
@@ -314,9 +345,10 @@ namespace UnoGame
 
             var nextPlayer = gameGroup.Players.Peek();
             throwCard.Color = cardColor;
-            var colorStr = throwCard.Color.Value.GetCardColorName();
+            var colorStr = throwCard.Color.GetCardColorName();
 
-            res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
+            ShowThrowCard(currentPlayer, throwCard, res);
+            //res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
             //res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
             res.AddPlayerAction($@"顏色選擇{colorStr}");
 
@@ -340,12 +372,13 @@ namespace UnoGame
                 skipNextPlayer.HandCards.Add(card);
             }
             gameGroup.Players.Enqueue(skipNextPlayer);
-
             throwCard.Color = color;
-            var colorName = throwCard.Color.Value.GetCardColorName();
+            var colorName = throwCard.Color.GetCardColorName();
 
-            res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
+            //res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 出牌:");
             //res.AddPlayerAction(message: "", imgFile: throwCard.ImageFile);
+            ShowThrowCard(currentPlayer, throwCard, res);
+
             res.AddPlayerAction($@"顏色選擇{colorName}，玩家 @{skipNextPlayer.Username} 抽四張牌並跳過");
 
 
@@ -362,7 +395,10 @@ namespace UnoGame
 
             var nextPlayer = gameGroup.Players.Peek();
 
+            var number = gameGroup.CardOnBoard.CardType == CardType.Number ? gameGroup.CardOnBoard.Number.ToString() : string.Empty;
+
             res.AddPlayerAction($@"玩家 @{currentPlayer.Username} 跳過");
+            res.AddPlayerAction($@"目前場上的牌 {gameGroup.CardOnBoard.Color.GetCardColorName()}{gameGroup.CardOnBoard.CardType.GetCardTypeName()}{number}");
 
         }
 
@@ -491,7 +527,7 @@ namespace UnoGame
                 else
                 {
 
-                    var currentColorName = cardOnBoard.Color.Value.GetCardColorName();
+                    var currentColorName = cardOnBoard.Color.GetCardColorName();
                     var currentTypeName = cardOnBoard.CardType.GetCardTypeName();
                     res.AddPlayerAction(@$"不能出這張牌，必須與目前牌的顏色為<i>{currentColorName}</i>，類別為<i>{currentTypeName}</i>或數字相符的");
                 }
@@ -739,7 +775,7 @@ namespace UnoGame
                     gameStateBuilder.AppendLine();
                     if (gameGroup.CardOnBoard != null)
                     {
-                        string colorName = gameGroup.CardOnBoard.Color.Value.GetCardColorName();
+                        string colorName = gameGroup.CardOnBoard.Color.GetCardColorName();
                         string typeName = gameGroup.CardOnBoard.CardType.GetCardTypeName();
 
                         string cardName = $"{colorName}{typeName}";

@@ -29,9 +29,9 @@ namespace UnoGame.Telegram
         private IMapper _mapper;
         private Dictionary<string, BotCommandInfo> _commands;
 
-        private string ImgSourceRootPath = @"Source/UnoGame/Images";
+        private string ImgSourceRootPath;
         private string StickerKey = "StickerKey";
-        private string StickerName = "";
+        private string StickerName;
         private User? _botInfo;
 
 
@@ -45,6 +45,7 @@ namespace UnoGame.Telegram
             BotClient = new TelegramBotClient(token);
             _botInfo = BotClient.GetMeAsync().Result;
             StickerName = $"botUnoCard_by_{_botInfo.Username}";
+            ImgSourceRootPath = Path.Combine("Source", "UnoGame", "Images");
             _gameService = gameService;
             _mapper = TGMapper.CreateMap();
             _commands = InitCommandsMapperAsync().Result;
@@ -83,6 +84,7 @@ namespace UnoGame.Telegram
                 new(@$"join", "加入遊戲", async m => await JoinPlayerAsync(m)),
                 new(@$"joinbot", "加入電腦玩家", async m => await JoinBotPlayerAsync(m)),
                 new(@$"end", "強制結束遊戲", async m => await EndGameAsync(m)),
+                new(@$"clearcard", "重設卡牌", async m => await ClearCardAsync(m)),
                 //to do new(@$"settings", "遊戲設定", async m => await EndGameAsync(m)),
                 new(@$"test",  "test",async m => await TestAsync(m))
             };
@@ -195,14 +197,23 @@ namespace UnoGame.Telegram
             return Task.CompletedTask;
         }
 
+        public async Task ClearCardAsync(Message message)
+        {
+            StickerSet stickerSet = await BotClient.GetStickerSetAsync(name: StickerName);
+            foreach (var item in stickerSet.Stickers)
+            {
+                await BotClient.DeleteStickerFromSetAsync(item.FileId);
+            }
+            await BotClient.SendTextMessageAsync(message.Chat.Id, "已重設卡牌");
+        }
+
+
+
         public async Task<List<ImageFileInfo>> GetCardStickersAsync(Message message)
         {
-
-            //var botInfo = await BotClient.GetMeAsync();
-            //var stickerName = $"botUnoCard_by_{botInfo.Username}";
             StickerSet stickerSet = new StickerSet();
             List<ImageFileInfo>? tgFiles = new List<ImageFileInfo>();
-            var sourceRootPath = @$"{AppContext.BaseDirectory}Source\UnoGame\Images";
+            var sourceRootPath = @$"{AppContext.BaseDirectory}{ImgSourceRootPath}";
             var filesPath = Directory.GetFiles(sourceRootPath);
 
             int firstEmojiUnicode = 0x1F601;
@@ -267,6 +278,7 @@ namespace UnoGame.Telegram
                         var file = await BotClient.UploadStickerFileAsync(
                             userId: _botInfo.Id,
                             pngSticker: new InputFileStream(ms));
+                        tgFiles.Add(new(fileId: file.FileId));
                     }
                     catch (Exception ex)
                     {
